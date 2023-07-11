@@ -52,7 +52,7 @@ set(SOURCE_FILES
   src/pose_tool.cpp
   src/goal_tool.cpp
   ${MOC_FILES}
-)
+        ../../scheduler/src/main.cpp ../../scheduler/src/TaskManager.cpp ../../scheduler/include/scheduler/TaskManager.h)
 
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
