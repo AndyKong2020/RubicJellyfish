@@ -1,0 +1,6 @@
+<launch>
+    <node pkg="serial_robot" type="serial_robot_node" name="serial_robot" output="screen">
+        <remap from="/write" to ="/write_pixel"/>
+        <param name="serial_name" value="/dev/ttyUSB0"/>
+    </node>
+</launch>
