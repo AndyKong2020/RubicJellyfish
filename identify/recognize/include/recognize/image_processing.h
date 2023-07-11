@@ -37,7 +37,7 @@ public :
     Mat target_coor;
     Mat img_show, ROI_bgr, coordinate, NUM_bgr, Image;
     Point2f target;
-
+    Point point;
     map<int, int> HP;
 
 

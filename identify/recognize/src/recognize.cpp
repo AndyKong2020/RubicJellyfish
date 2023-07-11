@@ -7,13 +7,14 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
+#include <librealsense2/rs.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 //#include ""
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Image.h>
 #include <string>
 
-
+#include "recognize/image_processing.h"
 #include "recognize/yolox.h"
 #include "recognize/yolov5.h"
 
@@ -22,6 +23,7 @@ using namespace std;
 using namespace cv;
 //using namespace zbar;
 Mat img_show;
+image_processing _img;
 //void BarCode(cv::Mat _image){
 //    cv::Mat imgGray;
 //
@@ -118,13 +120,23 @@ void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
     std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
 
 }
+
+void Depth_cb(const sensor_msgs::ImageConstPtr &msg) {
+    cv_bridge::CvImagePtr Dest ;
+    Dest = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::TYPE_16UC1);
+    cv::Mat depth_pic = Dest->image;
+    ushort d = depth_pic.at<ushort>(_img.point);           //读取深度值，数据类型为ushort单位为ｍｍ
+    float d_value = float(d)/1000 ;      //强制转换
+    cout<< "Value of depth_pic's pixel= "<<d_value<<endl;    //读取深度值
+}
 int main(int argc, char **argv) {
     ros::init(argc, argv, "recognize");
     ros::NodeHandle n;
     ros::Subscriber resultsSub = n.subscribe("/camera/color/image_raw", 1, &Image_cb);
-    ros::Time start = ros::Time::now();
-    yolov5_identify(img_show);
-    std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
+    ros::Subscriber DepthSub = n.subscribe("/camera/depth/image_rect_raw", 1, Depth_cb);
+//    ros::Time start = ros::Time::now();
+//    yolov5_identify(img_show);
+//    std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
     ros::Rate loop_rate(10);
     while (ros::ok()) {
         ros::spinOnce();
