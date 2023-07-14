@@ -9,98 +9,86 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <librealsense2/rs.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
-//#include ""
+#include "zbar.h"
+#include <chrono>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Image.h>
 #include <string>
-
 #include "recognize/image_processing.h"
 #include "recognize/yolox.h"
 #include "recognize/yolov5.h"
 
-
 using namespace std;
 using namespace cv;
-//using namespace zbar;
+using namespace zbar;
+
+typedef struct
+{
+    string data;
+    string type;
+    vector<Point> location;
+} decodedObject;
 Mat img_show;
 image_processing _img;
-//void BarCode(cv::Mat _image){
-//    cv::Mat imgGray;
-//
-//    //转化为灰度图，方便运算与识别
-//
-//    cvtColor(_image, imgGray, COLOR_RGB2GRAY);
-//
-//    // 高斯平滑滤波
-//    Mat imgGus;
-//    GaussianBlur(imgGray, imgGus, Size(3,3), 0);
-//
-//    //4.求得水平和垂直方向灰度图像的梯度差,使用Sobel算子
-//    Mat imageX16S, imageY16S;
-//    Sobel(imgGus, imageX16S, CV_16S, 1, 0, 3, 1, 0, 4);
-//    Sobel(imgGus, imageY16S, CV_16S, 0, 1, 3, 1, 0, 4);
-//    convertScaleAbs(imageX16S, imageSobelX, 1, 0);
-//    convertScaleAbs(imageY16S, imageSobelY, 1, 0);
-//    imageSobelOut=imageSobelX-imageSobelY;
-//
-//
-//    //5.均值滤波，消除高频噪声
-//    Mat imgBlur;
-//    blur(imageSobelOut, imgBlur, Size(3,3));
-//
-//
-//    //6.二值化
-//    Mat imgThreshold;
-//    threshold(imgBlur,imgThreshold,80,255,THRESH_BINARY);
-//
-//    //闭运算，填充条码间隙
-//    Mat element = getStructuringElement(0,Size(7,7));//闭运算需要的参数
-//    morphologyEx(imgThreshold,imgThreshold,MORPH_CLOSE,elementmor);
-//
-//    // 膨胀，根据目标条形码的大小，需要多次膨胀操作，具体次数随情况变化
-//    Mat  elementdli=getStructuringElement(0,Size(30,7));
-//    dilate(imgThreshold,imgThreshold,elementdli);
-//    dilate(imgThreshold,imgThreshold,elementdli);
-//    dilate(imgThreshold,imgThreshold,elementdli);
-//    dilate(imgThreshold,imgThreshold,elementdli);
-//    dilate(imgThreshold,imgThreshold,elementdli);
-//
-//    vector<vector<Point>> contours;
-//    vector<Vec4i> hiera;
-//    findContours(imageSobleOutThreshold,contours,hiera,RETR_EXTERNAL,CHAIN_APPROX_NONE);
-//    Mat scanimg[contours.size()];
-//    for(int i=0;i<contours.size();i++)//contours is the contour of my image
-//    {
-//        Rect rect=boundingRect((Mat)contours[i]);//rect is a coordinate,it's has 4
-//        //element
-//        rectangle(image,rect,Scalar(255),2);
-//        cout<<"a"<<endl;
-//        scanimg[i] = image(rect);//image accoding to the rect to cut the pictrue
-//        //process come to here ,things we need do to pictrue is
-//        cvtColor(scanimg[i], scanimg[i], COLOR_RGB2GRAY);
-//        string o = num2str(i);
-//        imshow(o, scanimg[i]);
-//        //already done,the next step is Identify barcode
-//
-//        ImageScanner scanner;
-//        scanner.set_config(ZBAR_NONE, ZBAR_CFG_ENABLE, 1);
-//        int width = scanimg[i].cols;
-//        int height = scanimg[i].rows;
-//        uchar *raw = (uchar *)scanimg[i].data;
-//        Image imageZbar(width, height, "Y800", raw, width * height);
-//        scanner.scan(imageZbar); //扫描条码
-//        Image::SymbolIterator symbol = imageZbar.symbol_begin();
-//        if(imageZbar.symbol_begin()==imageZbar.symbol_end())
-//        {
-//            cout<<"查询条码失败，图片清晰度不足！"<<endl;
-//        }
-//        for(;symbol != imageZbar.symbol_end();++symbol)
-//        {
-//            cout<<"类型："<<endl<<symbol->get_type_name()<<endl<<endl;
-//            cout<<"条码："<<endl<<symbol->get_data()<<endl<<endl;
-//        }
-//    }
-//}
+vector<decodedObject> decode_rec;
+
+
+// 查找和解码条形码和二维码
+void decode(Mat &im, vector<decodedObject>&decodedObjects)
+{
+    im = imread("/home/nuaa/2.jpg");
+    // Create zbar scanner
+    zbar::ImageScanner scanner;
+    // 创建 zbar 扫描仪
+    scanner.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
+    // 将图像转换为灰度
+    Mat imGray;
+    cvtColor(im, imGray,CV_BGR2GRAY);
+    // 将图像数据包装在 zbar 图像中
+    zbar::Image image(im.cols, im.rows, "Y800", (uchar *)imGray.data, im.cols * im.rows);
+    // 扫描条形码和二维码的图像
+    int n = scanner.scan(image);
+    // 打印结果
+    for(zbar::Image::SymbolIterator symbol = image.symbol_begin(); symbol != image.symbol_end(); ++symbol)
+    {
+        decodedObject obj;
+        obj.type = symbol->get_type_name();
+        obj.data = symbol->get_data();
+        // 打印 type 和 data
+        cout << "Type : " << obj.type << endl;
+        cout << "Data : " << obj.data << endl << endl;
+        // 获取位置
+        for(int i = 0; i< symbol->get_location_size(); i++)
+        {
+            obj.location.emplace_back(symbol->get_location_x(i),symbol->get_location_y(i));
+        }
+        decodedObjects.push_back(obj);
+    }
+    // 显示条码和二维码位置
+    // 遍历所有解码对象
+    for(int i = 0; i < decodedObjects.size(); i++)
+    {
+        vector<Point> points = decodedObjects[i].location;
+        vector<Point> hull;
+        // 如果点不形成四边形，请找到凸包
+        if(points.size() > 4)
+            convexHull(points, hull);
+        else
+            hull = points;
+        // 凸包中的点数
+        int n = hull.size();
+
+        for(int j = 0; j < n; j++)
+        {
+            line(im, hull[j], hull[ (j+1) % n], Scalar(255,0,0), 3);
+        }
+    }
+    // 显示结果
+    imshow("Results", im);
+    //waitKey(0);
+}
+
+
 void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
     ros::Time start = ros::Time::now();
     try
@@ -116,7 +104,8 @@ void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
-
+    decode(img_show,decode_rec); // recognize the code
+    decode_rec.clear(); // don't forget to clear the vector
     std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
 
 }
@@ -134,9 +123,10 @@ int main(int argc, char **argv) {
     ros::NodeHandle n;
     ros::Subscriber resultsSub = n.subscribe("/camera/color/image_raw", 1, &Image_cb);
     ros::Subscriber DepthSub = n.subscribe("/camera/depth/image_rect_raw", 1, Depth_cb);
-//    ros::Time start = ros::Time::now();
-//    yolov5_identify(img_show);
-//    std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
+
+    ros::Time start = ros::Time::now();
+    //yolov5_identify(img_show);
+    std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
     ros::Rate loop_rate(10);
     while (ros::ok()) {
         ros::spinOnce();

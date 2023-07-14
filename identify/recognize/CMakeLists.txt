@@ -25,6 +25,7 @@ find_package(
         geometry_msgs
 )
 find_package(OpenCV 4 REQUIRED)
+find_package(Zbar0)
 find_package(Eigen3 REQUIRED)
 find_package(Ceres REQUIRED)
 ## System dependencies are found with CMake's conventions
@@ -67,6 +68,7 @@ target_link_libraries(
         ${OpenCV_LIBRARIES}
         ${catkin_LIBRARIES}
         ${CERES_LIBRARIES}
+        ${ZBAR_LIBS} zbar
         DigitalRecognitionLib
 )
 
