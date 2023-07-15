@@ -11,17 +11,11 @@ class TaskManager
 {
 public:
     TaskManager();
-    void addToRouteList(const Eigen::Matrix<double, 3, 2> & route_point);
-    Eigen::Matrix<double, 3, 2> nextRoutePoint();
     void nextTask();
-    Eigen::Matrix<double, 3, 2> setCurrentRoutePoint(const Eigen::Matrix<double, 3, 2> & self_pose);
-    int getCurrentRouteIndex();
-    int getCurrentTask();
+    int getCurrentTask() const;
     void reset();
 private:
-    int route_index;
     int task_index;
-    std::vector<Eigen::Matrix<double, 3, 2>> route_list;
 
 };
 #endif //SRC_TASKMANAGER_H
