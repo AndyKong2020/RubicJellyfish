@@ -128,7 +128,7 @@ add_executable(
         ${PROJECT_NAME}_node
         src/main.cpp
         src/TaskManager.cpp
-)
+        src/Task.cpp)
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/scheduler.cpp

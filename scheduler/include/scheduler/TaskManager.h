@@ -19,8 +19,9 @@ public:
     int getCurrentTask();
     void reset();
 private:
-    std::vector<Eigen::Matrix<double, 3, 2>> route_list;
     int route_index;
     int task_index;
+    std::vector<Eigen::Matrix<double, 3, 2>> route_list;
+
 };
 #endif //SRC_TASKMANAGER_H
