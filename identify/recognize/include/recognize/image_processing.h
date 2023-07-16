@@ -10,7 +10,9 @@
 #include <string>
 #include <fstream>
 #include <numeric>
-
+#include "opencv2/imgproc.hpp"
+#include "opencv2/highgui.hpp"
+#include "opencv2/videoio.hpp"
 //Eigen头文件必须在opencv2/core/eigen.hpp前
 #include<Eigen/Core>
 
@@ -39,7 +41,8 @@ public :
     Point2f target;
     Point point;
     map<int, int> HP;
-
+    int image_threshold(const Mat& srcImg);
+    int tool_tohsv(const Mat& Img);
 
 };
 #endif //SRC_IMAGE_PROCESSING_H

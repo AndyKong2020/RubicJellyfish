@@ -104,8 +104,9 @@ void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
-    decode(img_show,decode_rec); // recognize the code
-    decode_rec.clear(); // don't forget to clear the vector
+//    decode(img_show,decode_rec); // recognize the code
+//    decode_rec.clear(); // don't forget to clear the vector
+    _img.image_threshold(img_show);
     std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
 
 }
