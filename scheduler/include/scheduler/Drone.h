@@ -9,6 +9,8 @@
 #include <boost/serialization/singleton.hpp>
 #include <Eigen/Geometry>
 
+#define drone Drone::get_mutable_instance()
+
 
 class Drone: public boost::serialization::singleton<Drone>
 {
