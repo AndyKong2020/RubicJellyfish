@@ -42,10 +42,11 @@ inline uint8_t cal_crc_table(uint8_t *ptr, uint8_t len) {
   }
   return crc;
 }
+
 #ifdef SENTRY
 #define TX_DATA_LEN 18
 #else
-#define TX_DATA_LEN 17
+#define TX_DATA_LEN 19
 #endif
 
 
@@ -54,13 +55,13 @@ using namespace std;
 typedef struct
 {
     uint8_t header1 = 0xAA;
-    uint8_t d_addr;
-    uint8_t id = 0x81;
+    uint8_t d_addr = 0xFF;
+    uint8_t id = 0x00;
     uint8_t length = TX_DATA_LEN;
-    float pitch;//角度制
-    float roll;
-    float yaw;//-180～180
-    uint8_t if_track;
+    float pitch = 1.1;//角度制
+    float roll = 0;
+    float yaw = 0;//-180～180
+    uint8_t if_track = 0;
     uint8_t sumcheck = 0;
     uint8_t addcheck = 0;
 }__attribute__((packed)) aim_info;
@@ -87,7 +88,7 @@ public:
     bool init();
     unsigned char addCheckSum(unsigned char InputBytes[], unsigned char data_lenth);
     template <typename T> 
-    void serSend(T& aimInfo);
+    void serSend(T& a);
     template <typename T> 
     void serRead(T& gimbalInfo);
 
@@ -107,13 +108,17 @@ void SerialCommon::serRead(T& gimbalInfo)
 }
 
 template <typename T> 
-void SerialCommon::serSend(T& aimInfo)
+void SerialCommon::serSend(T& aim_info)
 {
-    serial.write((uint8_t*)&aimInfo, TX_DATA_LEN);   //发送串口数据
+    serial.write((uint8_t*)&aim_info, TX_DATA_LEN);   //发送串口数据
 }
 
-inline void cal_sum(aim_info* data,const uint8_t *sum_check, uint8_t *add_check){
-
+inline void cal_sum(aim_info* data){
+    char *p = (char *)data;
+    for(int i = 0; i < data->length-2; i++){
+        data->sumcheck += p[i];
+        data->addcheck += data->sumcheck;
+    }
 }
 
 #endif

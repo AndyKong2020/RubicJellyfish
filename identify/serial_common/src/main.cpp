@@ -52,7 +52,7 @@ ros::Publisher HP_pub;
 ros::Publisher mode_pub;
 std_msgs::Int8 mode;
 gimbal_info gimbalAng;
-aim_info shootTgt;
+
 
 
 
@@ -94,27 +94,13 @@ void write_callback_down(const serial_common::serialWrite::ConstPtr& msg)
   msg2Processor(armorProDown, msg);
 }
 #else
-void write_callback(const serial_common::serialWrite::ConstPtr& msg)
+void write_callback()
 {
+    aim_info shootTgt;
   vector<float> data;
-  shootTgt.pitch = msg->pitch;
+  shootTgt.pitch = 1;
 
-    shootTgt.sumcheck += shootTgt.header1;
-    shootTgt.addcheck += shootTgt.sumcheck;
-    shootTgt.sumcheck += shootTgt.d_addr;
-    shootTgt.addcheck += shootTgt.sumcheck;
-    shootTgt.sumcheck += shootTgt.id;
-    shootTgt.addcheck += shootTgt.sumcheck;
-    shootTgt.sumcheck += shootTgt.length;
-    shootTgt.addcheck += shootTgt.sumcheck;
-    shootTgt.sumcheck += (uint8_t)shootTgt.pitch;
-    shootTgt.addcheck += shootTgt.sumcheck;
-    shootTgt.sumcheck += (uint8_t)shootTgt.roll;
-    shootTgt.addcheck += shootTgt.sumcheck;
-    shootTgt.sumcheck += (uint8_t)shootTgt.yaw;
-    shootTgt.addcheck += shootTgt.sumcheck;
-    shootTgt.sumcheck += shootTgt.if_track;
-    shootTgt.addcheck += shootTgt.sumcheck;
+    cal_sum(&shootTgt);
     ser.serSend<aim_info>(shootTgt);
 }
 #endif
@@ -139,7 +125,7 @@ int main (int argc, char** argv)
 
     nh.getParam("/ifshow",ifShow);
 
-    ros::Subscriber write_sub = nh.subscribe("/down/write", 1, write_callback);
+    //ros::Subscriber write_sub = nh.subscribe("/down/write", 1, write_callback);
 //    ros::Publisher img_pub_up = nh.advertise<sensor_msgs::Image>("/up/img_top", 1);
 //    ros::Publisher img_pub_down = nh.advertise<sensor_msgs::Image>("/down/img_top", 1);
 //    armorPro=new ArmorProcessor(ifShow);
@@ -165,11 +151,11 @@ int main (int argc, char** argv)
     while(ros::ok())
     {
 	   // serial_rate_pub.publish(write_rate);
-      ser.serRead<gimbal_info>(gimbalAng);//
-//      while(1) {
-//          write_callback();
-//          sleep(1);
-//      }
+      //ser.serRead<gimbal_info>(gimbalAng);//
+      while(1) {
+          write_callback();
+          sleep(1);
+      }
 //      #ifdef SENTRY
 //      if(gimbalAng.id == idUp)
 //      {
