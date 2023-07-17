@@ -15,6 +15,7 @@
 #include <sensor_msgs/Image.h>
 #include <string>
 #include "recognize/image_processing.h"
+#include "recognize/matchTemplate.h"
 #include "recognize/yolox.h"
 #include "recognize/yolov5.h"
 
@@ -22,71 +23,13 @@ using namespace std;
 using namespace cv;
 using namespace zbar;
 
-typedef struct
-{
-    string data;
-    string type;
-    vector<Point> location;
-} decodedObject;
+
 Mat img_show;
 image_processing _img;
 vector<decodedObject> decode_rec;
-
-
-// 查找和解码条形码和二维码
-void decode(Mat &im, vector<decodedObject>&decodedObjects)
-{
-    im = imread("/home/nuaa/2.jpg");
-    // Create zbar scanner
-    zbar::ImageScanner scanner;
-    // 创建 zbar 扫描仪
-    scanner.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
-    // 将图像转换为灰度
-    Mat imGray;
-    cvtColor(im, imGray,CV_BGR2GRAY);
-    // 将图像数据包装在 zbar 图像中
-    zbar::Image image(im.cols, im.rows, "Y800", (uchar *)imGray.data, im.cols * im.rows);
-    // 扫描条形码和二维码的图像
-    int n = scanner.scan(image);
-    // 打印结果
-    for(zbar::Image::SymbolIterator symbol = image.symbol_begin(); symbol != image.symbol_end(); ++symbol)
-    {
-        decodedObject obj;
-        obj.type = symbol->get_type_name();
-        obj.data = symbol->get_data();
-        // 打印 type 和 data
-        cout << "Type : " << obj.type << endl;
-        cout << "Data : " << obj.data << endl << endl;
-        // 获取位置
-        for(int i = 0; i< symbol->get_location_size(); i++)
-        {
-            obj.location.emplace_back(symbol->get_location_x(i),symbol->get_location_y(i));
-        }
-        decodedObjects.push_back(obj);
-    }
-    // 显示条码和二维码位置
-    // 遍历所有解码对象
-    for(int i = 0; i < decodedObjects.size(); i++)
-    {
-        vector<Point> points = decodedObjects[i].location;
-        vector<Point> hull;
-        // 如果点不形成四边形，请找到凸包
-        if(points.size() > 4)
-            convexHull(points, hull);
-        else
-            hull = points;
-        // 凸包中的点数
-        int n = hull.size();
-
-        for(int j = 0; j < n; j++)
-        {
-            line(im, hull[j], hull[ (j+1) % n], Scalar(255,0,0), 3);
-        }
-    }
-    // 显示结果
-    imshow("Results", im);
-    //waitKey(0);
-}
+EasyTemplate _temp;
+Mat test1 = imread("/home/nuaa/wolf.jpg");
+Mat test2 = imread("/home/nuaa/wolf_big.jpg");
 
 
 void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
@@ -126,6 +69,19 @@ int main(int argc, char **argv) {
     ros::Subscriber DepthSub = n.subscribe("/camera/depth/image_rect_raw", 1, Depth_cb);
 
     ros::Time start = ros::Time::now();
+
+//the test of match_template
+
+//    Rect _roi;
+//    float _i = 0.8;
+//    Mat display = test2.clone();
+//    _temp.Mark(test1, true);
+//    _temp.Match(test2, _roi,_i);
+//    Point center={_roi.x+test1.cols/2,_roi.y+test1.rows/2};
+//    cv::circle(display,center,50,Scalar(200, 255, 200),6);
+//    imshow("model",test1);
+//    imshow("show",display);
+
     //yolov5_identify(img_show);
     std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
     ros::Rate loop_rate(10);

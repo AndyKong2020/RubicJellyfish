@@ -60,7 +60,8 @@ add_executable(
         src/image_recognization.cpp
         src/image_processing.cpp
         src/yolov5.cpp
-        src/yolox.cpp)
+        src/yolox.cpp
+        src/matchTemplate.cpp)
         
         
 target_link_libraries(

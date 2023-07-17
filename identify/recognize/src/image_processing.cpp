@@ -3,6 +3,93 @@
 //
 #include "recognize/image_processing.h"
 
+int low_H = 0, low_S = 0, low_V = 0;
+int high_H = max_value_H, high_S = max_value, high_V = max_value;
+
+static void on_low_H_thresh_trackbar(int, void *)
+{
+    low_H = min(high_H-1, low_H);
+    setTrackbarPos("Low H", window_detection_name, low_H);
+}
+static void on_high_H_thresh_trackbar(int, void *)
+{
+    high_H = max(high_H, low_H+1);
+    setTrackbarPos("High H", window_detection_name, high_H);
+}
+static void on_low_S_thresh_trackbar(int, void *)
+{
+    low_S = min(high_S-1, low_S);
+    setTrackbarPos("Low S", window_detection_name, low_S);
+}
+static void on_high_S_thresh_trackbar(int, void *)
+{
+    high_S = max(high_S, low_S+1);
+    setTrackbarPos("High S", window_detection_name, high_S);
+}
+static void on_low_V_thresh_trackbar(int, void *)
+{
+    low_V = min(high_V-1, low_V);
+    setTrackbarPos("Low V", window_detection_name, low_V);
+}
+static void on_high_V_thresh_trackbar(int, void *)
+{
+    high_V = max(high_V, low_V+1);
+    setTrackbarPos("High V", window_detection_name, high_V);
+}
+// 查找和解码条形码和二维码
+void decode(Mat &im, vector<decodedObject>&decodedObjects)
+{
+    im = imread("/home/nuaa/2.jpg");
+    // Create zbar scanner
+    zbar::ImageScanner scanner;
+    // 创建 zbar 扫描仪
+    scanner.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
+    // 将图像转换为灰度
+    Mat imGray;
+    cvtColor(im, imGray,CV_BGR2GRAY);
+    // 将图像数据包装在 zbar 图像中
+    zbar::Image image(im.cols, im.rows, "Y800", (uchar *)imGray.data, im.cols * im.rows);
+    // 扫描条形码和二维码的图像
+    int n = scanner.scan(image);
+    // 打印结果
+    for(zbar::Image::SymbolIterator symbol = image.symbol_begin(); symbol != image.symbol_end(); ++symbol)
+    {
+        decodedObject obj;
+        obj.type = symbol->get_type_name();
+        obj.data = symbol->get_data();
+        // 打印 type 和 data
+        cout << "Type : " << obj.type << endl;
+        cout << "Data : " << obj.data << endl << endl;
+        // 获取位置
+        for(int i = 0; i< symbol->get_location_size(); i++)
+        {
+            obj.location.emplace_back(symbol->get_location_x(i),symbol->get_location_y(i));
+        }
+        decodedObjects.push_back(obj);
+    }
+    // 显示条码和二维码位置
+    // 遍历所有解码对象
+    for(int i = 0; i < decodedObjects.size(); i++)
+    {
+        vector<Point> points = decodedObjects[i].location;
+        vector<Point> hull;
+        // 如果点不形成四边形，请找到凸包
+        if(points.size() > 4)
+            convexHull(points, hull);
+        else
+            hull = points;
+        // 凸包中的点数
+        int n = hull.size();
+
+        for(int j = 0; j < n; j++)
+        {
+            line(im, hull[j], hull[ (j+1) % n], Scalar(255,0,0), 3);
+        }
+    }
+    // 显示结果
+    imshow("Results", im);
+    //waitKey(0);
+}
 // the tools of choosing the right hsv threshold
 int image_processing::tool_tohsv(const Mat& Img){
     namedWindow(window_capture_name);
@@ -35,51 +122,6 @@ int image_processing::tool_tohsv(const Mat& Img){
         }
     }
     return 0;
-}
-
-// the function of detect something
-int image_processing::image_threshold(const Mat& srcImg){
-    //	srcImg原图
-    Mat midImg,frame_threshold,dilation_dst;
-    Mat dstImg = srcImg.clone();
-
-    // Convert from BGR to HSV colorspace
-    cvtColor(srcImg, midImg, COLOR_BGR2HSV);
-    // Detect the object based on HSV Range Values
-    inRange(midImg, Scalar(0, 157, 0), Scalar(180, 255, 255), frame_threshold);
-    //	灰度化
-    //cvtColor(frame_threshold, midImg,COLOR_BGR2GRAY);     //灰度图
-    //	中值滤波
-    medianBlur(frame_threshold, midImg, 9);               //滤波后
-    namedWindow("【滤波图】", WINDOW_NORMAL);
-    imshow("【滤波图】", midImg);
-    //	二值化
-    //adaptiveThreshold(midImg, midImg, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 11, 1); // 动态阈值二值化
-    //threshold(midImg, midImg, 190, 255, 0);
-
-    //实际的项目之中可以通过中值滤波,消除椒盐噪声,在用一次腐蚀去除掉相应的干扰,最后,加上膨胀将轮廓进行一个放大的过程.
-
-    int element_size =2;
-    int s = element_size * 2 + 1;
-    Mat structureElement = getStructuringElement(MORPH_RECT,
-                                                 Size(s, s), Point(-1, -1));
-
-    // 膨胀，element_size为膨胀属性，越大膨胀越厉害
-    dilate(midImg, midImg, structureElement, Point(-1, -1), 1);
-    namedWindow("【膨胀】", WINDOW_NORMAL);
-    imshow("【膨胀】", midImg);
-
-//    //开运算.先腐蚀后膨胀:可以去掉小的对象
-//    morphologyEx(midImg, midImg,MORPH_OPEN, element_size,Point(-1, -1), 2);
-//    //morphologyEx(frame_threshold, midImg, MORPH_CLOSE, element_size);
-//    namedWindow("【开运算后】", WINDOW_NORMAL);
-//    imshow("【开运算后】", midImg);
-//
-//    //闭运算,先膨胀后腐蚀,可以填充小的洞
-//    morphologyEx(midImg, midImg, MORPH_CLOSE, element_size,Point(-1, -1), 2);
-//    namedWindow("【闭运算后】", WINDOW_NORMAL);
-//    imshow("【闭运算后】", midImg);
-
 }
 vector<Point2f> find_centre(const Mat& srcImg,const Mat& midImg){
     Mat dstImg = srcImg.clone();
@@ -140,6 +182,52 @@ vector<Point2f> find_centre(const Mat& srcImg,const Mat& midImg){
     imshow("【最小包围矩形及获取中心点】", dstImg);
     return target;
 }
+// the function of detect something
+int image_processing::image_threshold(const Mat& srcImg){
+    //	srcImg原图
+    Mat midImg,frame_threshold,dilation_dst;
+    Mat dstImg = srcImg.clone();
+
+    // Convert from BGR to HSV colorspace
+    cvtColor(srcImg, midImg, COLOR_BGR2HSV);
+    // Detect the object based on HSV Range Values
+    inRange(midImg, Scalar(0, 157, 0), Scalar(180, 255, 255), frame_threshold);
+    //	灰度化
+    //cvtColor(frame_threshold, midImg,COLOR_BGR2GRAY);     //灰度图
+    //	中值滤波
+    medianBlur(frame_threshold, midImg, 9);               //滤波后
+    namedWindow("【滤波图】", WINDOW_NORMAL);
+    imshow("【滤波图】", midImg);
+    //	二值化
+    //adaptiveThreshold(midImg, midImg, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 11, 1); // 动态阈值二值化
+    //threshold(midImg, midImg, 190, 255, 0);
+
+    //实际的项目之中可以通过中值滤波,消除椒盐噪声,在用一次腐蚀去除掉相应的干扰,最后,加上膨胀将轮廓进行一个放大的过程.
+
+    int element_size =2;
+    int s = element_size * 2 + 1;
+    Mat structureElement = getStructuringElement(MORPH_RECT,
+                                                 Size(s, s), Point(-1, -1));
+
+    // 膨胀，element_size为膨胀属性，越大膨胀越厉害
+    dilate(midImg, midImg, structureElement, Point(-1, -1), 1);
+    namedWindow("【膨胀】", WINDOW_NORMAL);
+    imshow("【膨胀】", midImg);
+
+//    //开运算.先腐蚀后膨胀:可以去掉小的对象
+//    morphologyEx(midImg, midImg,MORPH_OPEN, element_size,Point(-1, -1), 2);
+//    //morphologyEx(frame_threshold, midImg, MORPH_CLOSE, element_size);
+//    namedWindow("【开运算后】", WINDOW_NORMAL);
+//    imshow("【开运算后】", midImg);
+//
+//    //闭运算,先膨胀后腐蚀,可以填充小的洞
+//    morphologyEx(midImg, midImg, MORPH_CLOSE, element_size,Point(-1, -1), 2);
+//    namedWindow("【闭运算后】", WINDOW_NORMAL);
+//    imshow("【闭运算后】", midImg);
+    //find_centre(srcImg,midImg);
+}
+
+
 //用作对原图像进行处理，讲处理后的图像送入神经网络识别端。可保存样本图片，记得修改初始计数值
 void image_processing::Picture_process(image_processing &image) {
     Mat img;
