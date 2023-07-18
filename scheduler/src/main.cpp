@@ -9,6 +9,7 @@
 
 #include "scheduler/Drone.h"
 
+ros::Publisher pose_pub;
 
 
 void t265Callback(const nav_msgs::Odometry::ConstPtr & msg) {
