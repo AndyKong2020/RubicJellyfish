@@ -6,18 +6,14 @@
 #include <std_msgs/Int8.h>
 #include "iomanip"
 #include <stdlib.h>
-#include <scheduler/pose_mode.h>
-#include <scheduler/velocity_mode.h>
-#include <serial_common/serialWrite.h>
-#include <serial_common/HP.h>
-#include <serial_common/RobotHP.h>
-#include <serial_common/gimbal.h>
+#include "scheduler/pose_mode.h"
+#include "scheduler/velocity_mode.h"
+#include "recognize/image.h"
 #include <string>
 #include <iostream>
 #include <stdio.h>
 #include <vector>
 #include "serial_common.h"
-#include "armor_processor.h"
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Image.h>
 #include <sensor_msgs/image_encodings.h>
@@ -29,14 +25,7 @@ SerialCommon ser;
 
 bool ifShow;
 
-#ifdef SENTRY
-int idUp=0;
-int idDown=1;
-ArmorProcessor *armorProUp = nullptr;
-ArmorProcessor *armorProDown = nullptr;
-#else
-ArmorProcessor* armorPro = nullptr;
-#endif
+
 std_msgs::String write_rate;
 ros::Publisher serial_rate_pub;
 int lost_cnt;
@@ -46,8 +35,7 @@ uint8_t aRxBuffer[1] = {0};
 
 //原始血量存储
 vector<uint8_t> HPdata;
-serial_common::HP hpdata_msg;
-serial_common::RobotHP rHP_msg;
+
 ros::Publisher HP_pub;
 
 //模式切换
@@ -120,7 +108,7 @@ void t265velocitywrite_callback(const scheduler::velocity_mode::ConstPtr& msg)
     cal_sum(&velocity);
     ser.serSend<t265_velocity>(velocity,velocity.length);
 }
-void imagewrite_callback(const serial_common::serialWrite::ConstPtr& msg)
+void imagewrite_callback(const recognize::image::ConstPtr& msg)
 {
   image_target shootTgt;
   vector<float> data;

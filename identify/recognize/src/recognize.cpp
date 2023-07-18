@@ -18,13 +18,14 @@
 #include "recognize/matchTemplate.h"
 #include "recognize/yolox.h"
 #include "recognize/yolov5.h"
-
+#include "recognize/image.h"
 using namespace std;
 using namespace cv;
 using namespace zbar;
 
 
 Mat img_show;
+ros::Publisher image_pub;
 image_processing _img;
 vector<decodedObject> decode_rec;
 EasyTemplate _temp;
@@ -33,6 +34,7 @@ Mat test2 = imread("/home/nuaa/wolf_big.jpg");
 
 
 void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
+    recognize::image _image;
     ros::Time start = ros::Time::now();
     try
     {
@@ -51,7 +53,7 @@ void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
 //    decode_rec.clear(); // don't forget to clear the vector
     _img.image_threshold(img_show);
     std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
-
+    image_pub.publish(_image);
 }
 
 void Depth_cb(const sensor_msgs::ImageConstPtr &msg) {
@@ -66,7 +68,8 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "recognize");
     ros::NodeHandle n;
     ros::Subscriber resultsSub = n.subscribe("/camera/color/image_raw", 1, &Image_cb);
-    ros::Subscriber DepthSub = n.subscribe("/camera/depth/image_rect_raw", 1, Depth_cb);
+    ros::Subscriber DepthSub = n.subscribe("/camera/depth/image_rect_raw", 1, &Depth_cb);
+    image_pub = n.advertise<recognize::image>("/image/write", 1);
 
     ros::Time start = ros::Time::now();
 

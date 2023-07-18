@@ -23,6 +23,7 @@ find_package(
         sensor_msgs
         std_msgs
         geometry_msgs
+        message_generation
 )
 find_package(OpenCV 4 REQUIRED)
 find_package(Zbar0)
@@ -37,6 +38,16 @@ ENDIF ()
 #RelWithDebInfo
 set(ROS_BUILD_TYPE Debug)
 set(CMAKE_BUILD_TYPE Debug)
+
+add_message_files(
+        FILES
+        image.msg
+)
+
+generate_messages(
+        DEPENDENCIES
+        std_msgs
+)
 
 catkin_package(
         #  INCLUDE_DIRS include
