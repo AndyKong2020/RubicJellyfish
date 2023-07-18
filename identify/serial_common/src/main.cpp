@@ -6,6 +6,8 @@
 #include <std_msgs/Int8.h>
 #include "iomanip"
 #include <stdlib.h>
+#include <scheduler/pose_mode.h>
+#include <scheduler/velocity_mode.h>
 #include <serial_common/serialWrite.h>
 #include <serial_common/HP.h>
 #include <serial_common/RobotHP.h>
@@ -82,28 +84,53 @@ gimbal_info gimbalAng;
 //  processor.coordiConvent(shootTgt);
 //  ser.serSend<aim_info>(shootTgt);
 //}
-
-#ifdef SENTRY
-void write_callback_up(const serial_common::serialWrite::ConstPtr& msg)
+void t265poswrite_callback(const scheduler::pose_mode::ConstPtr& msg)
 {
-  msg2Processor(armorProUp, msg);
+    t265_pos pos;
+    pos.self_x = (int)msg->self_x*1000;
+    pos.self_y = (int)msg->self_y*1000;
+    pos.self_z = (int)msg->self_z*1000;
+    pos.self_roll = (int)msg->self_roll*1000;
+    pos.self_pitch = (int)msg->self_pitch*1000;
+    pos.self_yaw = (int)msg->self_yaw*1000;
+    pos.target_x = (int)msg->target_x*1000;
+    pos.target_y = (int)msg->target_y*1000;
+    pos.target_z = (int)msg->target_z*1000;
+    pos.target_roll = (int)msg->target_roll*1000;
+    pos.target_pitch = (int)msg->target_pitch*1000;
+    pos.target_yaw = (int)msg->target_yaw*1000;
+    cal_sum(&pos);
+    ser.serSend<t265_pos>(pos,pos.length);
 }
-
-void write_callback_down(const serial_common::serialWrite::ConstPtr& msg)
+void t265velocitywrite_callback(const scheduler::velocity_mode::ConstPtr& msg)
 {
-  msg2Processor(armorProDown, msg);
+    t265_velocity velocity;
+    velocity.self_vx = (int)msg->self_vx*1000;
+    velocity.self_vy = (int)msg->self_vy*1000;
+    velocity.self_vz = (int)msg->self_vz*1000;
+    velocity.self_wroll = (int)msg->self_wroll*1000;
+    velocity.self_wpitch = (int)msg->self_wpitch*1000;
+    velocity.self_wyaw = (int)msg->self_wyaw*1000;
+    velocity.target_vx = (int)msg->target_vx*1000;
+    velocity.target_vy = (int)msg->target_vy*1000;
+    velocity.target_vz = (int)msg->target_vz*1000;
+    velocity.target_wroll = (int)msg->target_wroll*1000;
+    velocity.target_wpitch = (int)msg->target_wpitch*1000;
+    velocity.target_wyaw = (int)msg->target_wyaw*1000;
+    cal_sum(&velocity);
+    ser.serSend<t265_velocity>(velocity,velocity.length);
 }
-#else
-void write_callback()
+void imagewrite_callback(const serial_common::serialWrite::ConstPtr& msg)
 {
-    aim_info shootTgt;
+  image_target shootTgt;
   vector<float> data;
-  shootTgt.pitch = 1;
+  shootTgt.mode = 2;
+  int length = 16;
 
-    cal_sum(&shootTgt);
-    ser.serSend<aim_info>(shootTgt);
+  shootTgt.length = length;
+  cal_sum(&shootTgt);
+  ser.serSend<image_target>(shootTgt,length);
 }
-#endif
 
 void receive_process(std::string &read_buffer)
 {
@@ -125,7 +152,9 @@ int main (int argc, char** argv)
 
     nh.getParam("/ifshow",ifShow);
 
-    //ros::Subscriber write_sub = nh.subscribe("/down/write", 1, write_callback);
+    ros::Subscriber t265pos_sub = nh.subscribe("/t265/pos",1,t265poswrite_callback);
+    ros::Subscriber t265velocity_sub = nh.subscribe("/t265/velocity",1,t265velocitywrite_callback);
+    ros::Subscriber image_sub = nh.subscribe("/image/write", 1, imagewrite_callback);
 //    ros::Publisher img_pub_up = nh.advertise<sensor_msgs::Image>("/up/img_top", 1);
 //    ros::Publisher img_pub_down = nh.advertise<sensor_msgs::Image>("/down/img_top", 1);
 //    armorPro=new ArmorProcessor(ifShow);
@@ -152,10 +181,10 @@ int main (int argc, char** argv)
     {
 	   // serial_rate_pub.publish(write_rate);
       //ser.serRead<gimbal_info>(gimbalAng);//
-      while(1) {
-          write_callback();
-          sleep(1);
-      }
+//      while(1) {
+//          write_callback();
+//          //sleep(1);
+//      }
 //      #ifdef SENTRY
 //      if(gimbalAng.id == idUp)
 //      {

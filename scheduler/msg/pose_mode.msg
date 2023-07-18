@@ -1,0 +1,12 @@
+float32 self_x
+float32 self_y
+float32 self_z
+float32 self_pitch
+float32 self_yaw
+float32 self_roll
+float32 target_x
+float32 target_y
+float32 target_z
+float32 target_pitch
+float32 target_yaw
+float32 target_roll

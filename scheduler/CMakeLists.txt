@@ -19,8 +19,8 @@ find_package(Eigen3 REQUIRED)
 
 add_message_files(
         FILES
-        t265pose.msg
-)
+        pose_mode.msg
+        velocity_mode.msg)
 
 generate_messages(
         DEPENDENCIES
