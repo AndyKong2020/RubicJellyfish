@@ -17,6 +17,17 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Eigen3 REQUIRED)
 
+add_message_files(
+        FILES
+        t265pose.msg
+)
+
+generate_messages(
+        DEPENDENCIES
+        std_msgs
+        nav_msgs
+)
+
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
 
@@ -128,7 +139,10 @@ add_executable(
         ${PROJECT_NAME}_node
         src/main.cpp
         src/TaskManager.cpp
-)
+        src/Task.cpp
+        src/Drone.cpp)
+
+
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/scheduler.cpp
