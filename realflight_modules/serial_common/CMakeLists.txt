@@ -126,7 +126,7 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
   include
-  ../../../devel/include
+  ../../../../devel/include
   /usr/include/opencv4/
 )
 
