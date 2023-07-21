@@ -4,10 +4,12 @@
 #include <serial/serial.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Int8.h>
+#include <std_msgs/Float32.h>
 #include "iomanip"
 #include <stdlib.h>
 #include "scheduler/pose_mode.h"
-#include "scheduler/velocity_mode.h"
+#include "serial_common/plot_test.h"
+#include "serial_common/gimbal.h"
 #include "recognize/image.h"
 #include <string>
 #include <iostream>
@@ -20,94 +22,55 @@
 
 
 using namespace std;
-
 SerialCommon ser;
-
+ros::Publisher plot_z;
+ros::Publisher imu_show;
 bool ifShow;
 
-
-std_msgs::String write_rate;
-ros::Publisher serial_rate_pub;
-int lost_cnt;
-
-//接受原始数据
-uint8_t aRxBuffer[1] = {0};
-
-//原始血量存储
-vector<uint8_t> HPdata;
-
-ros::Publisher HP_pub;
-
-//模式切换
-ros::Publisher mode_pub;
 std_msgs::Int8 mode;
 gimbal_info gimbalAng;
+serial_common::gimbal  _imu;
+serial_common::plot_test test;
 
-
-
-
-//void msg2Processor(ArmorProcessor& processor, const serial_common::serialWrite::ConstPtr& msg)
-//{
-//  if(msg->x != 30000 && msg->x != 20000)
-//  {
-//    //从相机坐标系转换到C板坐标系
-//    processor.camCoord.at<float>(0,0) = msg->z / 1000.0;
-//    processor.camCoord.at<float>(1,0) = msg->x / 1000.0;
-//    processor.camCoord.at<float>(2,0) = msg->y / 1000.0;
-//    lost_cnt=0;
-//
-//    processor.getTgt = true;
-//  }
-//  else if(msg->x == 30000)
-//  {
-//  	lost_cnt++;
-//    processor.getTgt = false;
-//    if(lost_cnt>600)
-//    	processor.newTgt = true;
-//  }
-//  else
-//  {
-//    processor.getTgt = false;
-//  }
-//  processor.coordiConvent(shootTgt);
-//  ser.serSend<aim_info>(shootTgt);
-//}
 void t265poswrite_callback(const scheduler::pose_mode::ConstPtr& msg)
 {
     t265_pos pos;
-    pos.self_x = (int)msg->self_x*1000;
-    pos.self_y = (int)msg->self_y*1000;
-    pos.self_z = (int)msg->self_z*1000;
-    pos.self_roll = (int)msg->self_roll*1000;
-    pos.self_pitch = (int)msg->self_pitch*1000;
-    pos.self_yaw = (int)msg->self_yaw*1000;
-    pos.target_x = (int)msg->target_x*1000;
-    pos.target_y = (int)msg->target_y*1000;
-    pos.target_z = (int)msg->target_z*1000;
-    pos.target_roll = (int)msg->target_roll*1000;
-    pos.target_pitch = (int)msg->target_pitch*1000;
-    pos.target_yaw = (int)msg->target_yaw*1000;
+    pos.self_x = msg->self_x;
+    pos.self_y = msg->self_y;
+    pos.self_z = msg->self_z;
+    pos.self_roll = msg->self_roll;
+    pos.self_pitch = msg->self_pitch;
+    pos.self_yaw = msg->self_yaw;
+    pos.target_x = msg->target_x;
+    pos.target_y = msg->target_y;
+    pos.target_z = msg->target_z;
+    pos.target_roll = msg->target_roll;
+    pos.target_pitch = msg->target_pitch;
+    pos.target_yaw = msg->target_yaw;
+    pos.self_vx = msg->self_vx;
+    pos.self_vy = msg->self_vy;
+    pos.self_vz = msg->self_vz;
+    pos.self_wroll = msg->self_wroll;
+    pos.self_wpitch = msg->self_wpitch;
+    pos.self_wyaw = msg->self_wyaw;
+    pos.target_vx = msg->target_vx;
+    pos.target_vy = msg->target_vy;
+    pos.target_vz = msg->target_vz;
+    pos.target_wroll = msg->target_wroll;
+    pos.target_wpitch = msg->target_wpitch;
+    pos.target_wyaw = msg->target_wyaw;
+    cout<< "z:"<<pos.self_z<<endl;
+    test.x = pos.self_x;
+    test.y = pos.self_y;
+    test.z = pos.self_z;
+    test.vx = pos.self_vx;
+    test.vy = pos.self_vy;
+    test.vz = pos.self_vz;
+    plot_z.publish(test);
     cal_sum(&pos);
     ser.serSend<t265_pos>(pos,pos.length);
 }
-void t265velocitywrite_callback(const scheduler::velocity_mode::ConstPtr& msg)
-{
-    t265_velocity velocity;
-    velocity.self_vx = (int)msg->self_vx*1000;
-    velocity.self_vy = (int)msg->self_vy*1000;
-    velocity.self_vz = (int)msg->self_vz*1000;
-    velocity.self_wroll = (int)msg->self_wroll*1000;
-    velocity.self_wpitch = (int)msg->self_wpitch*1000;
-    velocity.self_wyaw = (int)msg->self_wyaw*1000;
-    velocity.target_vx = (int)msg->target_vx*1000;
-    velocity.target_vy = (int)msg->target_vy*1000;
-    velocity.target_vz = (int)msg->target_vz*1000;
-    velocity.target_wroll = (int)msg->target_wroll*1000;
-    velocity.target_wpitch = (int)msg->target_wpitch*1000;
-    velocity.target_wyaw = (int)msg->target_wyaw*1000;
-    cal_sum(&velocity);
-    ser.serSend<t265_velocity>(velocity,velocity.length);
-}
+
 void imagewrite_callback(const recognize::image::ConstPtr& msg)
 {
   image_target shootTgt;
@@ -120,16 +83,6 @@ void imagewrite_callback(const recognize::image::ConstPtr& msg)
   ser.serSend<image_target>(shootTgt,length);
 }
 
-void receive_process(std::string &read_buffer)
-{
-  if(read_buffer[0]!=0xAA &&  read_buffer[1]!=0x02 &&  read_buffer[2]!=0x04 )
-  {
-    return;
-  }
-  int patch_num=(int)read_buffer[3];
-
-}
-
 int main (int argc, char** argv)
 {
     //初始化节点
@@ -140,57 +93,38 @@ int main (int argc, char** argv)
 
     nh.getParam("/ifshow",ifShow);
 
+    plot_z = nh.advertise<serial_common::plot_test>("/plot_z", 1);
+    imu_show = nh.advertise<serial_common::gimbal>("/imu_show", 1);
     ros::Subscriber t265pos_sub = nh.subscribe("/t265/pos",1,t265poswrite_callback);
-    ros::Subscriber t265velocity_sub = nh.subscribe("/t265/velocity",1,t265velocitywrite_callback);
     ros::Subscriber image_sub = nh.subscribe("/image/write", 1, imagewrite_callback);
-//    ros::Publisher img_pub_up = nh.advertise<sensor_msgs::Image>("/up/img_top", 1);
-//    ros::Publisher img_pub_down = nh.advertise<sensor_msgs::Image>("/down/img_top", 1);
-//    armorPro=new ArmorProcessor(ifShow);
-    //ros::Subscriber write_sub = nh.subscribe("/write_to_Cboard", 1, write_callback);
-//    ros::Publisher img_pub = nh.advertise<sensor_msgs::Image>("/img_top", 1);
-//    #endif
-//
-//    mode_pub = nh.advertise<std_msgs::Int8>("/serial/read", 1);
-//    HP_pub = nh.advertise<serial_common::HP>("/serial/HP", 1);
-//    ros::Publisher PRY_pub = nh.advertise<serial_common::gimbalPRY>("/serial/gimbalPRY",1);
-//
-//
-//    serial_rate_pub = nh.advertise<std_msgs::String>("/serial/write_rate", 1);
-//    write_rate.data="1";
-//
-//    ros::Publisher status_pub = nh.advertise<serial_common::gimbal>("/robot_status", 1);
 
     //设置串口属性，并打开串口
 
     if(!ser.init())
       ros::shutdown();
 
+    ros::Rate loop_rate(400);
     while(ros::ok())
     {
-	   // serial_rate_pub.publish(write_rate);
-      //ser.serRead<gimbal_info>(gimbalAng);//
-//      while(1) {
-//          write_callback();
-//          //sleep(1);
-//      }
-//      #ifdef SENTRY
-//      if(gimbalAng.id == idUp)
-//      {
-//        armorProUp->recAndProcess(gimbalAng, shootTgt);
-//      }
-//      else
-//      {
-//        armorProDown->recAndProcess(gimbalAng, shootTgt);
-//      }
-//      #else
-//      armorPro->recAndProcess(gimbalAng, shootTgt,PRY_pub);
-//      mode.data=armorPro->mode;
-//      mode_pub.publish(mode);
-//      #endif
-
-
-
-      ros::spinOnce();
+        ser.serRead<gimbal_info>(gimbalAng);//
+        uint8_t _sumcheck = gimbalAng.sumcheck,_addcheck = gimbalAng.addcheck;
+        cal_sum(&gimbalAng);
+        if(gimbalAng.sumcheck == _sumcheck && gimbalAng.addcheck == _addcheck){
+            _imu.x = gimbalAng.x;
+            _imu.y = gimbalAng.y;
+            _imu.z = gimbalAng.z;
+            _imu.roll = gimbalAng.roll;
+            _imu.yaw = gimbalAng.yaw;
+            _imu.pitch = gimbalAng.pitch;
+            _imu.vx = gimbalAng.vx;
+            _imu.vy = gimbalAng.vy;
+            _imu.vz = gimbalAng.vz;
+            _imu.wroll = gimbalAng.wroll;
+            _imu.wyaw = gimbalAng.wyaw;
+            _imu.wpitch = gimbalAng.wpitch;
+            imu_show.publish(_imu);
+        }
+        ros::spinOnce();
 
     }
 

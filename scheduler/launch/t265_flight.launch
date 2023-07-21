@@ -4,6 +4,5 @@
 
     <include file="find realflight_module/realsense-ros/realsense2_camera/launch/rs_t265.launch">
     </include>
-   <rosparam command="load" file="$(find windMill)/cfg/params.yaml" />
 
 </launch>

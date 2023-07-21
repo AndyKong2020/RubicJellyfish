@@ -29,26 +29,27 @@ void sendPosition(scheduler::pose_mode &pose){
     pose.target_pitch = 1;
     pose.target_yaw = 1;
 
+    pose.self_vx = drone.getVelocity().x();
+    pose.self_vy = drone.getVelocity().y();
+    pose.self_vz = drone.getVelocity().z();
+    pose.self_wroll = drone.getAngularVelocity().x();
+    pose.self_wpitch = drone.getAngularVelocity().y();
+    pose.self_wyaw = drone.getAngularVelocity().z();
+
+    pose.target_vx = 1;
+    pose.target_vy = 1;
+    pose.target_vz = 1;
+    pose.target_wroll = 1;
+    pose.target_wpitch = 1;
+    pose.target_wyaw = 1;
     pose_mode_pub.publish(pose);
 }
-void sendVelocity(scheduler::velocity_mode &velocity){
-
-    velocity.self_vx = drone.getVelocity().x();
-    velocity.self_vy = drone.getVelocity().y();
-    velocity.self_vz = drone.getVelocity().z();
-    velocity.self_wroll = drone.getAngularVelocity().x();
-    velocity.self_wpitch = drone.getAngularVelocity().y();
-    velocity.self_wyaw = drone.getAngularVelocity().z();
-
-    velocity.target_vx = 1;
-    velocity.target_vy = 1;
-    velocity.target_vz = 1;
-    velocity.target_wroll = 1;
-    velocity.target_wpitch = 1;
-    velocity.target_wyaw = 1;
-
-    velocity_mode_pub.publish(velocity);
-}
+//void sendVelocity(scheduler::velocity_mode &velocity){
+//
+//
+//
+//    velocity_mode_pub.publish(velocity);
+//}
 void t265Callback(const nav_msgs::Odometry::ConstPtr & msg) {
     Eigen::Vector3d position(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
     Eigen::Quaterniond qtn_orientation(msg->pose.pose.orientation.w, msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, msg->pose.pose.orientation.z);
@@ -68,16 +69,18 @@ int main(int argc, char **argv) {
     drone.init();
 
     pose_mode_pub = nh.advertise<scheduler::pose_mode>("/t265/pos", 1);
-    velocity_mode_pub = nh.advertise<scheduler::velocity_mode>("/t265/velocity", 1);
+    //velocity_mode_pub = nh.advertise<scheduler::velocity_mode>("/t265/velocity", 1);
 
     ros::Subscriber t265_sub = nh.subscribe("/camera/odom/sample", 10, t265Callback);
+    ros::Rate loop_rate(10);
     while (ros::ok()) {
-        std::cout << drone.getAngularOrientation() << std::endl;
+        //std::cout << drone.getAngularOrientation() << std::endl;
 
         sendPosition(pose);
-        sendVelocity(velocity);
+        //sendVelocity(velocity);
 
         ros::spinOnce();
+        loop_rate.sleep();
     }
     return 0;
 }

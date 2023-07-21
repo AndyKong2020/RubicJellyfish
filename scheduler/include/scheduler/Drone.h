@@ -5,6 +5,7 @@
 #ifndef SRC_DRONE_H
 #define SRC_DRONE_H
 
+#include <iostream>
 #include <Eigen/Core>
 #include <boost/serialization/singleton.hpp>
 #include <Eigen/Geometry>

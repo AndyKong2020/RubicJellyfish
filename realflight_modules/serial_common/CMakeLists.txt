@@ -76,6 +76,11 @@ find_package( OpenCV 4 REQUIRED )
 # )
 
 ## Generate added messages and services with any dependencies listed here
+add_message_files(
+        FILES
+        plot_test.msg
+        gimbal.msg
+)
 generate_messages(
    DEPENDENCIES
    std_msgs
@@ -100,6 +105,7 @@ generate_messages(
 #   cfg/DynReconf1.cfg
 #   cfg/DynReconf2.cfg
 # )
+
 
 ###################################
 ## catkin specific configuration ##
@@ -126,7 +132,7 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
   include
-  ../../../devel/include
+  ../../../../devel/include
   /usr/include/opencv4/
 )
 
