@@ -1,0 +1,12 @@
+float32 self_vx
+float32 self_vy
+float32 self_vz
+float32 self_wpitch
+float32 self_wyaw
+float32 self_wroll
+float32 target_vx
+float32 target_vy
+float32 target_vz
+float32 target_wpitch
+float32 target_wyaw
+float32 target_wroll

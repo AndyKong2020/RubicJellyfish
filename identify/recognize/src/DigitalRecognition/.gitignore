@@ -1,0 +1,6 @@
+cmake-build-debug/*
+*.trtmodel
+*.xml
+*.onnx
+*.bin
+*.mapping

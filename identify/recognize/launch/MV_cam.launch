@@ -1,0 +1,7 @@
+<launch>
+
+
+   <node pkg="recognize" type="recognize_node" output="screen" name="recognize" respawn="true" />
+
+
+</launch>
