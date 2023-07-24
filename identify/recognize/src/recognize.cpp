@@ -29,10 +29,10 @@ ros::Publisher image_pub;
 image_processing _img;
 vector<decodedObject> decode_rec;
 EasyTemplate _temp;
-Mat test1 = imread("/home/nuaa/wolf.jpg");
+Mat test1 = imread("/home/robin/3.jpg");
 Mat test2 = imread("/home/nuaa/wolf_big.jpg");
 
-
+yolo _yolov5;
 void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
     recognize::image _image;
     ros::Time start = ros::Time::now();
@@ -49,9 +49,22 @@ void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
-//    decode(img_show,decode_rec); // recognize the code
-//    decode_rec.clear(); // don't forget to clear the vector
-    _img.image_threshold(img_show);
+    //_img.decode(img_show,decode_rec); // recognize the code
+    //decode_rec.clear(); // don't forget to clear the vector
+    //_img.image_threshold(img_show);
+    //_img.tool_tohsv(img_show);
+
+//    Rect _roi;
+//    float _i = 0.4;
+//    Mat display = test1.clone();
+//    _temp.Mark(img_show, true);
+//    _temp.Match(test1, _roi,_i);
+//
+//    Point center={_roi.width,_roi.height};
+//    cv::circle(img_show,center,50,Scalar(200, 255, 200),6);
+//    imshow("display",img_show);
+//    waitKey(1);
+    yolov5_identify(img_show,_yolov5);
     std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
     image_pub.publish(_image);
 }
@@ -71,6 +84,8 @@ int main(int argc, char **argv) {
     ros::Subscriber DepthSub = n.subscribe("/camera/depth/image_rect_raw", 1, &Depth_cb);
     image_pub = n.advertise<recognize::image>("/image/write", 1);
 
+    _yolov5.readNet("/home/robin/best.onnx");
+
     ros::Time start = ros::Time::now();
 
 //the test of match_template
@@ -86,7 +101,9 @@ int main(int argc, char **argv) {
 //    imshow("show",display);
 
     //yolov5_identify(img_show);
-    std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
+    //decode_dis(test1);
+    //_img.decode(test1,decode_rec);
+    //std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
     ros::Rate loop_rate(10);
     while (ros::ok()) {
         ros::spinOnce();

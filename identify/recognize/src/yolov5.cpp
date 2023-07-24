@@ -4,13 +4,13 @@
 #include <opencv2/dnn.hpp>
 #include <openvino/openvino.hpp>
 #include <opencv2/opencv.hpp>
+#include "recognize/yolov5.h"
 
 using namespace std;
 
 const float SCORE_THRESHOLD = 0.2;
 const float NMS_THRESHOLD = 0.4;
 const float CONFIDENCE_THRESHOLD = 0.4;
-
 
 struct Detection
 {
@@ -45,52 +45,28 @@ Resize resize_and_pad(cv::Mat& img, cv::Size new_shape) {
     return resize;
 }
 
-int yolov5_identify(cv::Mat _image){
+int yolov5_identify(cv::Mat _image,yolo _yolov5){
 
-    // Step 1. Initialize OpenVINO Runtime core
-    ov::Core core;
-    // Step 2. Read a model
-    std::shared_ptr<ov::Model> model = core.read_model("/home/nuaa/yolov5/runs/train/exp11/weights/best.xml");
-
-    // Step 3. Read input image
-    cv::Mat img = cv::imread("/home/nuaa/datasets/number/images/IMG_2157.JPG_105.jpg");
-    // resize image
+    cv::Mat img = _image;
     Resize res = resize_and_pad(img, cv::Size(640, 480));
 
-
-    // Step 4. Inizialize Preprocessing for the model
-    ov::preprocess::PrePostProcessor ppp = ov::preprocess::PrePostProcessor(model);
-    // Specify input image format
-    ppp.input().tensor().set_element_type(ov::element::u8).set_layout("NHWC").set_color_format(ov::preprocess::ColorFormat::BGR);
-    // Specify preprocess pipeline to input image without resizing
-    ppp.input().preprocess().convert_element_type(ov::element::f32).convert_color(ov::preprocess::ColorFormat::RGB).scale({255., 255., 255.});
-    //  Specify model's input layout
-    ppp.input().model().set_layout("NCHW");
-    // Specify output results format
-    ppp.output().tensor().set_element_type(ov::element::f32);
-    // Embed above steps in the graph
-    model = ppp.build();
-    ov::CompiledModel compiled_model = core.compile_model(model, "CPU");
-
-
-    // Step 5. Create tensor from image
     float *input_data = (float *) res.resized_image.data;
-    ov::Tensor input_tensor = ov::Tensor(compiled_model.input().get_element_type(), compiled_model.input().get_shape(), input_data);
+    ov::Tensor input_tensor = ov::Tensor(_yolov5.compiled_model.input().get_element_type(), _yolov5.compiled_model.input().get_shape(), input_data);
 
 
-    // Step 6. Create an infer request for model inference
-    ov::InferRequest infer_request = compiled_model.create_infer_request();
+
+    ov::InferRequest infer_request = _yolov5.compiled_model.create_infer_request();
     infer_request.set_input_tensor(input_tensor);
     infer_request.infer();
 
 
-    //Step 7. Retrieve inference results
+
     const ov::Tensor &output_tensor = infer_request.get_output_tensor();
     ov::Shape output_shape = output_tensor.get_shape();
     float *detections = output_tensor.data<float>();
 
 
-    // Step 8. Postprocessing including NMS
+
     std::vector<cv::Rect> boxes;
     vector<int> class_ids;
     vector<float> confidences;
@@ -138,7 +114,6 @@ int yolov5_identify(cv::Mat _image){
     }
 
 
-    // Step 9. Print results and save Figure with detections
     for (int i = 0; i < output.size(); i++)
     {
         auto detection = output[i];
@@ -161,6 +136,8 @@ int yolov5_identify(cv::Mat _image){
         float ymax = box.y + box.height;
         cv::rectangle(img, cv::Point(box.x, box.y), cv::Point(xmax, ymax), cv::Scalar(0, 255, 0), 3);
         cv::rectangle(img, cv::Point(box.x, box.y - 20), cv::Point(xmax, box.y), cv::Scalar(0, 255, 0), cv::FILLED);
+        cv::imshow("result",img);
+        cv::waitKey(1);
         cv::putText(img, std::to_string(classId), cv::Point(box.x, box.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
     }
     cv::imwrite("./detection_cpp.png", img);

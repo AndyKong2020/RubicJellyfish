@@ -37,9 +37,9 @@ static void on_high_V_thresh_trackbar(int, void *)
     setTrackbarPos("High V", window_detection_name, high_V);
 }
 // 查找和解码条形码和二维码
-void decode(Mat &im, vector<decodedObject>&decodedObjects)
+void image_processing::decode(Mat &im, vector<decodedObject>&decodedObjects)
 {
-    im = imread("/home/nuaa/2.jpg");
+    //im = imread("/home/robin/1.png");
     // Create zbar scanner
     zbar::ImageScanner scanner;
     // 创建 zbar 扫描仪
@@ -59,6 +59,7 @@ void decode(Mat &im, vector<decodedObject>&decodedObjects)
         obj.data = symbol->get_data();
         // 打印 type 和 data
         cout << "Type : " << obj.type << endl;
+        cout << "n:::"<< n <<endl;
         cout << "Data : " << obj.data << endl << endl;
         // 获取位置
         for(int i = 0; i< symbol->get_location_size(); i++)
@@ -88,7 +89,81 @@ void decode(Mat &im, vector<decodedObject>&decodedObjects)
     }
     // 显示结果
     imshow("Results", im);
-    //waitKey(0);
+    waitKey(1);
+}
+/*
+bool decode_dis(cv::Mat &im){
+    barcode::BarcodeDetector app;
+
+    string detect_prototxt = "/home/robin/opencv_3rdparty/detect.prototxt";
+    string detect_caffe_model = "/home/robin/opencv_3rdparty/detect.caffemodel";
+    string sr_prototxt = "/home/robin/opencv_3rdparty/sr.prototxt";
+    string sr_model = "/home/robin/opencv_3rdparty/sr.caffemodel";
+
+    Ptr<barcode::BarcodeDetector> bardet = makePtr<barcode::BarcodeDetector>(sr_prototxt, sr_model);
+    Mat input = imread("/home/robin/1.png");
+    vector<Point> corners;
+    vector<string> decode_info;
+    vector<string> decode_type;
+    vector<barcode::BarcodeType> decoded_format;
+
+    bool ok = bardet->detectAndDecode(input,decode_info,decoded_format,corners);
+    return ok;
+}*/
+void decode_wechat(cv::Mat &im){
+        im = imread("/home/robin/1.png");
+        //加载图片解码
+        Ptr<wechat_qrcode::WeChatQRCode> detector;
+        string detect_prototxt = "/home/robin/opencv_3rdparty/detect.prototxt";
+        string detect_caffe_model = "/home/robin/opencv_3rdparty/detect.caffemodel";
+        string sr_prototxt = "/home/robin/opencv_3rdparty/sr.prototxt";
+        string sr_caffe_model = "/home/robin/opencv_3rdparty/sr.caffemodel";
+
+        try
+        {
+            detector = makePtr<wechat_qrcode::WeChatQRCode>(detect_prototxt, detect_caffe_model,
+                                                            sr_prototxt, sr_caffe_model);
+        }
+        catch (const std::exception & e)
+        {
+            cout <<
+                 "\n---------------------------------------------------------------\n"
+                 "Failed to initialize WeChatQRCode.\n"
+                 "Please, download 'detector.*' and 'sr.*' from\n"
+                 "https://github.com/WeChatCV/opencv_3rdparty/tree/wechat_qrcode\n"
+                 "and put them into the current directory.\n"
+                 "---------------------------------------------------------------\n";
+            cout << e.what() << endl;
+        }
+
+        vector<Mat> vPoints;
+        vector<String> strDecoded;
+
+        Mat img = im;
+
+            double start = getTickCount();
+
+            strDecoded = detector->detectAndDecode(img, vPoints);
+            for (int i = 0; i < strDecoded.size(); i++)
+            {
+                cout << "decode-" << i + 1 << ": " << strDecoded[i] << endl;
+                Point pt1 = Point((int)vPoints[i].at<float>(0, 0), (int)vPoints[i].at<float>(0, 1));
+                Point pt2 = Point((int)vPoints[i].at<float>(1, 0), (int)vPoints[i].at<float>(1, 1));
+                Point pt3 = Point((int)vPoints[i].at<float>(2, 0), (int)vPoints[i].at<float>(2, 1));
+                Point pt4 = Point((int)vPoints[i].at<float>(3, 0), (int)vPoints[i].at<float>(3, 1));
+                line(img, pt1, pt2, Scalar(0, 255, 0), 2);
+                line(img, pt2, pt3, Scalar(0, 255, 0), 2);
+                line(img, pt3, pt4, Scalar(0, 255, 0), 2);
+                line(img, pt4, pt1, Scalar(0, 255, 0), 2);
+                putText(img, strDecoded[i], pt1, 0, 0.5, Scalar(255, 0, 0), 2);
+            }
+
+            double end = getTickCount();
+            double run_time = (end - start) / getTickFrequency();
+            double fps = 1 / run_time;
+            putText(img, format("FPS: %0.2f", fps), Point(20, 20), FONT_HERSHEY_SIMPLEX, 0.5, Scalar(0, 0, 255), 1, 8);
+            imshow("wechat_qrcode", img);
+        waitKey(1);
 }
 // the tools of choosing the right hsv threshold
 int image_processing::tool_tohsv(const Mat& Img){
@@ -191,7 +266,7 @@ int image_processing::image_threshold(const Mat& srcImg){
     // Convert from BGR to HSV colorspace
     cvtColor(srcImg, midImg, COLOR_BGR2HSV);
     // Detect the object based on HSV Range Values
-    inRange(midImg, Scalar(0, 157, 0), Scalar(180, 255, 255), frame_threshold);
+    inRange(midImg, Scalar(0, 0, 114), Scalar(180, 255, 240), frame_threshold);
     //	灰度化
     //cvtColor(frame_threshold, midImg,COLOR_BGR2GRAY);     //灰度图
     //	中值滤波

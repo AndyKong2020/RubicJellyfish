@@ -220,6 +220,8 @@ target_link_libraries(
         ${catkin_LIBRARIES}
         ${CERES_LIBRARIES}
 )
+add_dependencies(scheduler_node scheduler_gencpp)
+
 install(
         DIRECTORY include/${PROJECT_NAME}/
         DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}

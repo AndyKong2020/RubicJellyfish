@@ -117,8 +117,8 @@ generate_messages(
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
-#  LIBRARIES serial_common
+  INCLUDE_DIRS include
+  LIBRARIES serial_common
   CATKIN_DEPENDS message_runtime
 #  DEPENDS system_lib
 )
@@ -132,7 +132,7 @@ catkin_package(
 include_directories(
   ${catkin_INCLUDE_DIRS}
   include
-  ../../../../devel/include
+#  ../../../../devel/include
   /usr/include/opencv4/
 )
 
@@ -207,6 +207,7 @@ include_directories(
 add_executable(serial_common_node 
                 src/main.cpp
                 src/serial_common.cpp)
+add_dependencies(serial_common_node scheduler_gencpp)
 target_link_libraries(serial_common_node 
                   ${OpenCV_LIBRARIES}
                   ${catkin_LIBRARIES})

@@ -12,6 +12,12 @@
 #include <numeric>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
+#include <opencv2/wechat_qrcode.hpp>
+#include <opencv2/barcode.hpp>
+#include <opencv2/objdetect.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
@@ -51,6 +57,7 @@ public :
     Point point;
     map<int, int> HP;
     int image_threshold(const Mat& srcImg);
+    void decode(Mat &im, vector<decodedObject>&decodedObjects);
     int tool_tohsv(const Mat& Img);
 
 };
@@ -58,5 +65,6 @@ const int max_value_H = 360/2;
 const int max_value = 255;
 const String window_capture_name = "Video Capture";
 const String window_detection_name = "Object Detection";
-
+void decode_wechat(Mat& im);
+bool decode_dis(cv::Mat &im);
 #endif //SRC_IMAGE_PROCESSING_H
