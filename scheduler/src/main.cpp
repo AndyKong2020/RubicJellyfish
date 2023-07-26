@@ -72,7 +72,7 @@ int main(int argc, char **argv) {
     //velocity_mode_pub = nh.advertise<scheduler::velocity_mode>("/t265/velocity", 1);
 
     ros::Subscriber t265_sub = nh.subscribe("/camera/odom/sample", 10, t265Callback);
-    ros::Rate loop_rate(10);
+    ros::Rate loop_rate(200);
     while (ros::ok()) {
         //std::cout << drone.getAngularOrientation() << std::endl;
 

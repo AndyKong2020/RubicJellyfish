@@ -3,7 +3,7 @@ bool SerialCommon::init()
 {
       serial.setPort("/dev/ttyUSB0");
       serial.setBaudrate(460800);
-      serial::Timeout to = serial::Timeout::simpleTimeout(1000);
+      serial::Timeout to = serial::Timeout::simpleTimeout(50);
       serial.setTimeout(to);
       serial.open();
       cout<<"SYSTEM USB NOT DETECTED"<<endl;

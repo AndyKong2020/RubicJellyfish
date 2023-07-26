@@ -113,19 +113,20 @@ int main (int argc, char** argv)
             _imu.x = gimbalAng.x;
             _imu.y = gimbalAng.y;
             _imu.z = gimbalAng.z;
-            _imu.roll = gimbalAng.roll;
-            _imu.yaw = gimbalAng.yaw;
-            _imu.pitch = gimbalAng.pitch;
             _imu.vx = gimbalAng.vx;
             _imu.vy = gimbalAng.vy;
             _imu.vz = gimbalAng.vz;
-            _imu.wroll = gimbalAng.wroll;
-            _imu.wyaw = gimbalAng.wyaw;
-            _imu.wpitch = gimbalAng.wpitch;
+            _imu.ax = gimbalAng.vx;
+            _imu.ay = gimbalAng.vy;
+            _imu.az = gimbalAng.vz;
+            _imu.quaw = gimbalAng.quaw;
+            _imu.quax = gimbalAng.quax;
+            _imu.quay = gimbalAng.quay;
+            _imu.quaz = gimbalAng.quaz;
             imu_show.publish(_imu);
         }
         ros::spinOnce();
-
+        loop_rate.sleep();
     }
 
 

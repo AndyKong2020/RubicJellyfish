@@ -18,6 +18,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   rosmsg
   serial
+        geometry_msgs
   message_generation
   std_msgs
   cv_bridge
@@ -76,14 +77,15 @@ find_package( OpenCV 4 REQUIRED )
 # )
 
 ## Generate added messages and services with any dependencies listed here
+
 add_message_files(
         FILES
         plot_test.msg
         gimbal.msg
 )
 generate_messages(
-   DEPENDENCIES
-   std_msgs
+        DEPENDENCIES
+        std_msgs
 )
 
 ################################################

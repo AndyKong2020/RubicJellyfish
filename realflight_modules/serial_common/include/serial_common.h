@@ -72,19 +72,20 @@ typedef struct
     uint8_t header1 = 0xAA;
     uint8_t d_addr = 0xFF;
     uint8_t id = 0x00;
-    uint8_t length = 103;
-    float x = 0; //5+12+2
-    float y = 0;
-    float z = 0;
-    float roll = 0;
-    float pitch = 0;
-    float yaw = 0;
-    float vx = 0;
-    float vy = 0;
-    float vz = 0;
-    float wroll = 0;
-    float wpitch = 0;
-    float wyaw = 0;
+    uint8_t length = 32;
+    int16_t x = 0; //4+2*13+2 = 32
+    int16_t y = 0;
+    int16_t z = 0;
+    int16_t vx = 0;
+    int16_t vy = 0;
+    int16_t vz = 0;
+    int16_t ax = 0;
+    int16_t ay = 0;
+    int16_t az = 0;
+    int16_t quaw = 0;
+    int16_t quax = 0;
+    int16_t quay = 0;
+    int16_t quaz = 0;
     uint8_t sumcheck = 0;
     uint8_t addcheck = 0;
 }__attribute__((packed)) gimbal_info;
@@ -111,7 +112,7 @@ template <typename T>
 void SerialCommon::serRead(T& gimbalInfo)
 {
     buffer.clear();
-    serial.read(buffer,1);
+    serial.read(buffer,32);
     //serial.readline(buffer, 12,"\r\n");
     serial.flushInput();
     memset(&gimbalInfo, 0, sizeof(gimbalInfo));
