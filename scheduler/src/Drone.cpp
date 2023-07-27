@@ -94,12 +94,14 @@ Eigen::Matrix<double, 3, 2> Drone::getPose() const {
     Eigen::Matrix<double, 3, 2> pose;
     pose.col(0) = position;
     pose.col(1) = angular_orientation;
+    return pose;
 }
 
 Eigen::Matrix<double, 3, 2> Drone::getTwist() const {
     Eigen::Matrix<double, 3, 2> twist;
     twist.col(0) = velocity;
     twist.col(1) = angular_velocity;
+    return twist;
 }
 
 void Drone::setAccumulativeError(const Eigen::Vector3d &_convinced_position) {
