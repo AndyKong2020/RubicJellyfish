@@ -41,7 +41,7 @@ void Drone::setAngularVelocity(const Eigen::Vector3d & _angular_velocity)
 
 Eigen::Vector3d Drone::getPosition() const
 {
-    return position + position_accumulative_error;
+    return position;
 }
 
 Eigen::Vector3d Drone::getVelocity() const
@@ -88,6 +88,18 @@ Eigen::Vector3d Drone::ToEulerAngles(const Eigen::Quaterniond& q) {
     double cosy_cosp = 1 - 2 * (y * y + z * z);
     angles[2] = std::atan2(siny_cosp, cosy_cosp);
     return angles;
+}
+
+Eigen::Matrix<double, 3, 2> Drone::getPose() const {
+    Eigen::Matrix<double, 3, 2> pose;
+    pose.col(0) = position;
+    pose.col(1) = angular_orientation;
+}
+
+Eigen::Matrix<double, 3, 2> Drone::getTwist() const {
+    Eigen::Matrix<double, 3, 2> twist;
+    twist.col(0) = velocity;
+    twist.col(1) = angular_velocity;
 }
 
 void Drone::setAccumulativeError(const Eigen::Vector3d &_convinced_position) {

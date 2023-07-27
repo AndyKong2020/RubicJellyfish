@@ -1,8 +1,19 @@
 <launch>
    <node pkg="scheduler" type="scheduler_node" output="screen" name="scheduler" respawn="true" />
+   <node pkg="robot_pose_ekf" type="robot_pose_ekf" name="robot_pose_ekf">
+           <param name="output_frame" value="odom"/>
+           <param name="base_footprint_frame" value="base_link"/>
+           <param name="freq" value="60.0"/>
+           <param name="sensor_timeout" value="1.0"/>
+           <param name="odom_used" value="true"/>
+           <param name="imu_used" value="true"/>
+           <param name="vo_used" value="true"/>
+           <param name="debug" value="false"/>
+           <param name="self_diagnose" value="false"/>
    </node>
 
-    <include file="find realflight_module/realsense-ros/realsense2_camera/launch/rs_t265.launch">
+    <include file="$(find realsense2_camera)/launch/rs_t265.launch">
     </include>
+
 
 </launch>
