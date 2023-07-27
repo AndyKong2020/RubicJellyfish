@@ -12,8 +12,6 @@
 #include <numeric>
 #include <cv_bridge/cv_bridge.h>
 #include <opencv2/opencv.hpp>
-#include <opencv2/wechat_qrcode.hpp>
-#include <opencv2/barcode.hpp>
 #include <opencv2/objdetect.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui/highgui.hpp>
