@@ -450,7 +450,8 @@ void BaseRealSenseNode::registerDynamicOption(ros::NodeHandle& nh, rs2::options 
     std::shared_ptr<ddynamic_reconfigure::DDynamicReconfigure> ddynrec = std::make_shared<ddynamic_reconfigure::DDynamicReconfigure>(nh1);
     for (auto i = 0; i < RS2_OPTION_COUNT; i++)
     {
-        sensor.set_option(RS2_OPTION_ENABLE_RELOCALIZATION,0);
+        if(module_name == "tracking_module")
+            sensor.set_option(RS2_OPTION_ENABLE_RELOCALIZATION,0);
         rs2_option option = static_cast<rs2_option>(i);
         const std::string option_name(create_graph_resource_name(rs2_option_to_string(option)));
         try
