@@ -22,6 +22,7 @@ public:
     void setQtnOrientation(const Eigen::Quaterniond & _qtn_orientation);
     void setAngularOrientation(const Eigen::Vector3d & _angular_orientation);
     void setAngularVelocity(const Eigen::Vector3d & _angular_velocity);
+    void setAccumulativeError(const Eigen::Vector3d & _convinced_position);
     static Eigen::Vector3d ToEulerAngles(const Eigen::Quaterniond& q);
     Eigen::Vector3d getPosition() const;
     Eigen::Vector3d getVelocity() const;
@@ -29,6 +30,7 @@ public:
     Eigen::Vector3d getAngularOrientation() const;
     Eigen::Vector3d getAngularVelocity() const;
 private:
+    Eigen::Vector3d position_accumulative_error;
     Eigen::Vector3d position;
     Eigen::Vector3d velocity;
     Eigen::Quaterniond qtn_orientation;

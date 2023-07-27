@@ -10,6 +10,7 @@ void Drone::init()
     qtn_orientation = Eigen::Quaterniond::Identity();
     angular_orientation = Eigen::Vector3d::Zero();
     angular_velocity = Eigen::Vector3d::Zero();
+    position_accumulative_error = Eigen::Vector3d::Zero();
 }
 
 void Drone::setPosition(const Eigen::Vector3d & _position)
@@ -40,7 +41,7 @@ void Drone::setAngularVelocity(const Eigen::Vector3d & _angular_velocity)
 
 Eigen::Vector3d Drone::getPosition() const
 {
-    return position;
+    return position + position_accumulative_error;
 }
 
 Eigen::Vector3d Drone::getVelocity() const
@@ -87,5 +88,9 @@ Eigen::Vector3d Drone::ToEulerAngles(const Eigen::Quaterniond& q) {
     double cosy_cosp = 1 - 2 * (y * y + z * z);
     angles[2] = std::atan2(siny_cosp, cosy_cosp);
     return angles;
+}
+
+void Drone::setAccumulativeError(const Eigen::Vector3d &_convinced_position) {
+    position_accumulative_error = _convinced_position - position;
 }
 
