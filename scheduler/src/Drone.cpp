@@ -90,17 +90,17 @@ Eigen::Vector3d Drone::ToEulerAngles(const Eigen::Quaterniond& q) {
     return angles;
 }
 
-Eigen::Matrix<double, 3, 2> Drone::getPose() const {
-    Eigen::Matrix<double, 3, 2> pose;
-    pose.col(0) = position;
-    pose.col(1) = angular_orientation;
+DronePose Drone::getPose() const {
+    DronePose pose;
+    pose.position = position;
+    pose.angular_orientation = angular_orientation;
     return pose;
 }
 
-Eigen::Matrix<double, 3, 2> Drone::getTwist() const {
-    Eigen::Matrix<double, 3, 2> twist;
-    twist.col(0) = velocity;
-    twist.col(1) = angular_velocity;
+DroneTwist Drone::getTwist() const {
+    DroneTwist twist;
+    twist.velocity = velocity;
+    twist.angular_velocity = angular_velocity;
     return twist;
 }
 

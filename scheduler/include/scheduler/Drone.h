@@ -13,6 +13,19 @@
 #define drone Drone::get_mutable_instance()
 
 
+typedef struct
+{
+    Eigen::Vector3d position;
+    Eigen::Vector3d angular_orientation;
+} DronePose;
+
+typedef struct
+{
+    Eigen::Vector3d velocity;
+    Eigen::Vector3d angular_velocity;
+} DroneTwist;
+
+
 class Drone: public boost::serialization::singleton<Drone>
 {
 public:
@@ -29,8 +42,8 @@ public:
     Eigen::Quaterniond getQtnOrientation() const;
     Eigen::Vector3d getAngularOrientation() const;
     Eigen::Vector3d getAngularVelocity() const;
-    Eigen::Matrix<double, 3, 2> getPose() const;
-    Eigen::Matrix<double, 3, 2> getTwist() const;
+    DronePose getPose() const;
+    DroneTwist getTwist() const;
 private:
     Eigen::Vector3d position_accumulative_error;
     Eigen::Vector3d position;
