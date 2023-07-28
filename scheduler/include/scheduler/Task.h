@@ -12,28 +12,39 @@
 class Task
 {
 public:
-    Task(const int & task_id, const Eigen::Matrix<double, 3, 2> & pose_start, const Eigen::Matrix<double, 3, 2> & pose_end);
+    explicit Task(const int & task_id);
     int getTaskId() const;
-    virtual Eigen::Matrix<double, 3, 2> runTask() = 0;
-private:
+    virtual DronePose runTask() = 0;
+protected:
     int task_id;
-    Eigen::Matrix<double, 3, 2> pose_start, pose_end;
 };
 
 class RouteTask : public Task
 {
 public:
-    void addToRouteList(const Eigen::Matrix<double, 3, 2> & route_point);
-    Eigen::Matrix<double, 3, 2> nextRoutePoint();
-    Eigen::Matrix<double, 3, 2> findCurrentRoutePoint(const Eigen::Matrix<double, 3, 2> & self_pose);
+    explicit RouteTask(const int & task_id);
+    void addToRouteList(const DronePose & route_point);
+    DronePose nextRoutePoint();
+    DronePose findCurrentRoutePoint(const DronePose & self_pose);
     int getCurrentRouteIndex() const;
-    Eigen::Matrix<double, 3, 2> getCurrentRoutePoint() const;
+    DronePose getCurrentRoutePoint() const;
     int getRouteListSize() const;
-    Eigen::Matrix<double, 3, 2> runTask() override;
+    DronePose runTask() override;
 
 private:
     int route_index;
-    std::vector<Eigen::Matrix<double, 3, 2>> route_list;
+    std::vector<DronePose> route_list;
+
+};
+
+class PointTask : public Task
+{
+public:
+    explicit PointTask(const int & task_id);
+    DronePose runTask() override;
+private:
+    Eigen::Vector3d accumulative_error;
+    DronePose point;
 
 };
 #endif //SRC_TASK_H

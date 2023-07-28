@@ -3,10 +3,8 @@
 //
 #include "scheduler/Task.h"
 
-Task::Task(const int & task_id, const Eigen::Matrix<double, 3, 2> & pose_start, const Eigen::Matrix<double, 3, 2> & pose_end) {
+Task::Task(const int & task_id) {
     this->task_id = task_id;
-    this->pose_start = pose_start;
-    this->pose_end = pose_end;
 }
 
 int Task::getTaskId() const {
@@ -14,47 +12,47 @@ int Task::getTaskId() const {
 }
 
 
-void RouteTask::addToRouteList(const Eigen::Matrix<double, 3, 2> & route_point)
+void RouteTask::addToRouteList(const DronePose & route_point)
 {
     route_list.push_back(route_point);
 }
 
-Eigen::Matrix<double, 3, 2> RouteTask::nextRoutePoint()
+DronePose RouteTask::nextRoutePoint()
 {
     route_index++;
     return route_list[route_index];
 }
 
-inline bool position_match(const Eigen::Matrix<double, 3, 2> & a, const Eigen::Matrix<double, 3, 2> & b)
+inline bool position_match(const DronePose & a, const DronePose & b)
 {
     //计算两点距离
-    double distance = sqrt(pow(a(0, 0) - b(0, 0), 2) + pow(a(0, 1) - b(0, 1), 2));
+    double distance = sqrt(pow(a.position.x() - b.position.x(), 2) + pow(a.position.y() - b.position.y(), 2));
     return distance < 0.05;
 }
 
-inline bool orientation_match(const Eigen::Matrix<double, 3, 2> & a, const Eigen::Matrix<double, 3, 2> & b)
+inline bool orientation_match(const DronePose & a, const DronePose & b)
 {
     //计算两点角度差
-    double angle = angles::shortest_angular_distance(a(0, 2), b(0, 2));
+    double angle = angles::shortest_angular_distance(a.angular_orientation.z(), b.angular_orientation.z());
     return abs(angle) < 0.1;
 }
 
-inline bool pose_match(const Eigen::Matrix<double, 3, 2> & a, const Eigen::Matrix<double, 3, 2> & b)
+inline bool pose_match(const DronePose & a, const DronePose & b)
 {
     return position_match(a, b) && orientation_match(a, b);
 }
 
-inline double position_distance(const Eigen::Matrix<double, 3, 2> & a, const Eigen::Matrix<double, 3, 2> & b)
+inline double position_distance(const DronePose & a, const DronePose & b)
 {
-    return sqrt(pow(a(0, 0) - b(0, 0), 2) + pow(a(0, 1) - b(0, 1), 2));
+    return sqrt(pow(a.position.x() - b.position.x(), 2) + pow(a.position.y() - b.position.y(), 2));
 }
 
-inline double orientation_distance(const Eigen::Matrix<double, 3, 2> & a, const Eigen::Matrix<double, 3, 2> & b)
+inline double orientation_distance(const DronePose & a, const DronePose & b)
 {
-    return abs(angles::shortest_angular_distance(a(0, 2), b(0, 2)));
+    return abs(angles::shortest_angular_distance(a.angular_orientation.z(), b.angular_orientation.z()));
 }
 
-Eigen::Matrix<double, 3, 2> RouteTask::findCurrentRoutePoint(const Eigen::Matrix<double, 3, 2> & self_pose)
+DronePose RouteTask::findCurrentRoutePoint(const DronePose & self_pose)
 {
 //找到距离最近的点
     int min_index = 0;
@@ -78,7 +76,7 @@ int RouteTask::getCurrentRouteIndex() const
     return route_index;
 }
 
-Eigen::Matrix<double, 3, 2> RouteTask::getCurrentRoutePoint() const
+DronePose RouteTask::getCurrentRoutePoint() const
 {
     return route_list[route_index];
 }
@@ -88,9 +86,9 @@ int RouteTask::getRouteListSize() const
     return (int)route_list.size();
 }
 
-Eigen::Matrix<double, 3, 2> RouteTask::runTask() {
+DronePose RouteTask::runTask() {
     route_index = 0;
-    while(route_index < route_list.size())
+    while(route_index < route_list.size() - 1)
     {
         if (pose_match(drone.getPose(), route_list[route_index]))
         {
@@ -103,3 +101,14 @@ Eigen::Matrix<double, 3, 2> RouteTask::runTask() {
     }
 }
 
+RouteTask::RouteTask(const int &task_id) : Task(task_id) {
+    route_index = 0;
+}
+
+
+PointTask::PointTask(const int &task_id) : Task(task_id) {
+
+}
+
+DronePose PointTask::runTask() {
+}

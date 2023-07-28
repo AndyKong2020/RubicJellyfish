@@ -9,40 +9,49 @@
 #include "scheduler/pose_mode.h"
 #include "scheduler/velocity_mode.h"
 #include "scheduler/Drone.h"
+#include "scheduler/Task.h"
 
 ros::Publisher pose_mode_pub;
 ros::Publisher velocity_mode_pub;
 
-void sendPosition(scheduler::pose_mode &pose){
+scheduler::pose_mode pose;
 
-    pose.self_x = drone.getPosition().x();
-    pose.self_y = drone.getPosition().y();
-    pose.self_z = drone.getPosition().z();
-    pose.self_roll = drone.getAngularOrientation().x();
-    pose.self_pitch = drone.getAngularOrientation().y();
-    pose.self_yaw = drone.getAngularOrientation().z();
+DronePose target_pose;
+RouteTask *route_task01 = nullptr;
 
-    pose.target_x = 1;
-    pose.target_y = 1;
-    pose.target_z = 1;
-    pose.target_roll = 1;
-    pose.target_pitch = 1;
-    pose.target_yaw = 1;
+DronePose route_point00;
 
-    pose.self_vx = drone.getVelocity().x();
-    pose.self_vy = drone.getVelocity().y();
-    pose.self_vz = drone.getVelocity().z();
-    pose.self_wroll = drone.getAngularVelocity().x();
-    pose.self_wpitch = drone.getAngularVelocity().y();
-    pose.self_wyaw = drone.getAngularVelocity().z();
 
-    pose.target_vx = 1;
-    pose.target_vy = 1;
-    pose.target_vz = 1;
-    pose.target_wroll = 1;
-    pose.target_wpitch = 1;
-    pose.target_wyaw = 1;
-    pose_mode_pub.publish(pose);
+void sendPosition(scheduler::pose_mode &_pose){
+
+    _pose.self_x = drone.getPosition().x();
+    _pose.self_y = drone.getPosition().y();
+    _pose.self_z = drone.getPosition().z();
+    _pose.self_roll = drone.getAngularOrientation().x();
+    _pose.self_pitch = drone.getAngularOrientation().y();
+    _pose.self_yaw = drone.getAngularOrientation().z();
+
+    _pose.target_x = (float)target_pose.position.x();
+    _pose.target_y = (float)target_pose.position.y();
+    _pose.target_z = (float)target_pose.position.z();
+    _pose.target_roll = (float)target_pose.angular_orientation.x();
+    _pose.target_pitch = (float)target_pose.angular_orientation.y();
+    _pose.target_yaw = (float)target_pose.angular_orientation.z();
+
+    _pose.self_vx = drone.getVelocity().x();
+    _pose.self_vy = drone.getVelocity().y();
+    _pose.self_vz = drone.getVelocity().z();
+    _pose.self_wroll = drone.getAngularVelocity().x();
+    _pose.self_wpitch = drone.getAngularVelocity().y();
+    _pose.self_wyaw = drone.getAngularVelocity().z();
+
+    _pose.target_vx = 1;
+    _pose.target_vy = 1;
+    _pose.target_vz = 1;
+    _pose.target_wroll = 1;
+    _pose.target_wpitch = 1;
+    _pose.target_wyaw = 1;
+    pose_mode_pub.publish(_pose);
 }
 //void sendVelocity(scheduler::velocity_mode &velocity){
 //
@@ -59,15 +68,22 @@ void t265Callback(const nav_msgs::Odometry::ConstPtr & msg) {
     Eigen::Vector3d angular_velocity(msg->twist.twist.angular.x, msg->twist.twist.angular.y, msg->twist.twist.angular.z);
     drone.setVelocity(linear_velocity);
     drone.setAngularVelocity(angular_velocity);
+
+    sendPosition(pose);
+
 }
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "scheduler");
     ros::NodeHandle nh;
-    scheduler::pose_mode pose;
     scheduler::velocity_mode velocity;
     drone.init();
-
+    target_pose.position = Eigen::Vector3d::Zero();
+    target_pose.angular_orientation = Eigen::Vector3d::Zero();
+    route_task01 = new RouteTask(1);
+    route_point00.position = Eigen::Vector3d(1, 0, 0);
+    route_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_task01 -> addToRouteList(route_point00);
     pose_mode_pub = nh.advertise<scheduler::pose_mode>("/t265/pos", 1);
     //velocity_mode_pub = nh.advertise<scheduler::velocity_mode>("/t265/velocity", 1);
 
@@ -76,9 +92,8 @@ int main(int argc, char **argv) {
     while (ros::ok()) {
         //std::cout << drone.getAngularOrientation() << std::endl;
 
-        sendPosition(pose);
         //sendVelocity(velocity);
-
+        target_pose = route_task01 -> runTask();
         ros::spinOnce();
         loop_rate.sleep();
     }
