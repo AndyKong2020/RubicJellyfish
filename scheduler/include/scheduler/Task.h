@@ -29,6 +29,7 @@ public:
     int getCurrentRouteIndex() const;
     DronePose getCurrentRoutePoint() const;
     int getRouteListSize() const;
+    bool isRouteFinished() const;
     DronePose runTask() override;
 
 private:

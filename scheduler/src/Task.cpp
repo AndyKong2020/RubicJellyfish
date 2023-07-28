@@ -88,7 +88,7 @@ int RouteTask::getRouteListSize() const
 
 DronePose RouteTask::runTask() {
     route_index = 0;
-    while(route_index < route_list.size() - 1)
+    while(route_index < route_list.size())
     {
         if (pose_match(drone.getPose(), route_list[route_index]))
         {
@@ -103,6 +103,17 @@ DronePose RouteTask::runTask() {
 
 RouteTask::RouteTask(const int &task_id) : Task(task_id) {
     route_index = 0;
+}
+
+bool RouteTask::isRouteFinished() const {
+    if (route_index == route_list.size())
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
 }
 
 

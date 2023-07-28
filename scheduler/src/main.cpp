@@ -93,7 +93,15 @@ int main(int argc, char **argv) {
         //std::cout << drone.getAngularOrientation() << std::endl;
 
         //sendVelocity(velocity);
-        target_pose = route_task01 -> runTask();
+        while (!route_task01->isRouteFinished()){
+            target_pose = route_task01 -> runTask();
+            std::cout << target_pose.position << std::endl;
+            drone.setPosition(target_pose.position);
+
+        }
+
+        std::cout << "route finished" << std::endl;
+
         ros::spinOnce();
         loop_rate.sleep();
     }
