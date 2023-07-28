@@ -96,7 +96,6 @@ int main(int argc, char **argv) {
         while (!route_task01->isRouteFinished()){
             target_pose = route_task01 -> runTask();
             std::cout << target_pose.position << std::endl;
-            drone.setPosition(target_pose.position);
 
         }
 
