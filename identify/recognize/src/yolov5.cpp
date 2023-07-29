@@ -12,20 +12,7 @@ const float SCORE_THRESHOLD = 0.2;
 const float NMS_THRESHOLD = 0.4;
 const float CONFIDENCE_THRESHOLD = 0.4;
 
-struct Detection
-{
-    int class_id;
-    float confidence;
-    cv::Rect box;
-};
 
-
-struct Resize
-{
-    cv::Mat resized_image;
-    int dw;
-    int dh;
-};
 
 
 Resize resize_and_pad(cv::Mat& img, cv::Size new_shape) {
@@ -44,22 +31,43 @@ Resize resize_and_pad(cv::Mat& img, cv::Size new_shape) {
 
     return resize;
 }
+ov::CompiledModel yolo_init(const std::string& xml){
+    // Step 1. Initialize OpenVINO Runtime core
+    ov::Core core;
+    // Step 2. Read a model
+    std::shared_ptr<ov::Model> model = core.read_model(xml);
 
-int yolov5_identify(cv::Mat _image,yolo _yolov5){
+    // Step 4. Inizialize Preprocessing for the model
+    ov::preprocess::PrePostProcessor ppp = ov::preprocess::PrePostProcessor(model);
+    // Specify input image format
+    ppp.input().tensor().set_element_type(ov::element::u8).set_layout("NHWC").set_color_format(ov::preprocess::ColorFormat::BGR);
+    // Specify preprocess pipeline to input image without resizing
+    ppp.input().preprocess().convert_element_type(ov::element::f32).convert_color(ov::preprocess::ColorFormat::RGB).scale({255., 255., 255.});
+    //  Specify model's input layout
+    ppp.input().model().set_layout("NCHW");
+    // Specify output results format
+    ppp.output().tensor().set_element_type(ov::element::f32);
+    // Embed above steps in the graph
+    model = ppp.build();
 
+    ov::CompiledModel compiled_model = core.compile_model(model, "CPU");
+    return compiled_model;
+}
+std::vector<Detection> yolov5_identify(cv::Mat _image,ov::CompiledModel compiled_model){
+
+    // Step 3. Read input image
     cv::Mat img = _image;
-    Resize res = resize_and_pad(img, cv::Size(640, 480));
+    // resize image
+    Resize res = resize_and_pad(img, cv::Size(640, 640));
 
+    // Step 5. Create tensor from image
     float *input_data = (float *) res.resized_image.data;
-    ov::Tensor input_tensor = ov::Tensor(_yolov5.compiled_model.input().get_element_type(), _yolov5.compiled_model.input().get_shape(), input_data);
+    ov::Tensor input_tensor = ov::Tensor(compiled_model.input().get_element_type(), compiled_model.input().get_shape(), input_data);
 
-
-
-    ov::InferRequest infer_request = _yolov5.compiled_model.create_infer_request();
+    // Step 6. Create an infer request for model inference
+    ov::InferRequest infer_request = compiled_model.create_infer_request();
     infer_request.set_input_tensor(input_tensor);
     infer_request.infer();
-
-
 
     const ov::Tensor &output_tensor = infer_request.get_output_tensor();
     ov::Shape output_shape = output_tensor.get_shape();
@@ -103,6 +111,7 @@ int yolov5_identify(cv::Mat _image,yolo _yolov5){
     std::vector<int> nms_result;
     cv::dnn::NMSBoxes(boxes, confidences, SCORE_THRESHOLD, NMS_THRESHOLD, nms_result);
     std::vector<Detection> output;
+
     for (int i = 0; i < nms_result.size(); i++)
     {
         Detection result;
@@ -113,34 +122,38 @@ int yolov5_identify(cv::Mat _image,yolo _yolov5){
         output.push_back(result);
     }
 
-
-    for (int i = 0; i < output.size(); i++)
-    {
-        auto detection = output[i];
-        auto box = detection.box;
-        auto classId = detection.class_id;
-        auto confidence = detection.confidence;
-        float rx = (float)img.cols / (float)(res.resized_image.cols - res.dw);
-        float ry = (float)img.rows / (float)(res.resized_image.rows - res.dh);
-        box.x = rx * box.x;
-        box.y = ry * box.y;
-        box.width = rx * box.width;
-        box.height = ry * box.height;
-        cout << "Bbox" << i + 1 << ": Class: " << classId << " "
-             << "Confidence: " << confidence << " Scaled coords: [ "
-             << "cx: " << (float)(box.x + (box.width / 2)) / img.cols << ", "
-             << "cy: " << (float)(box.y + (box.height / 2)) / img.rows << ", "
-             << "w: " << (float)box.width / img.cols << ", "
-             << "h: " << (float)box.height / img.rows << " ]" << endl;
-        float xmax = box.x + box.width;
-        float ymax = box.y + box.height;
-        cv::rectangle(img, cv::Point(box.x, box.y), cv::Point(xmax, ymax), cv::Scalar(0, 255, 0), 3);
-        cv::rectangle(img, cv::Point(box.x, box.y - 20), cv::Point(xmax, box.y), cv::Scalar(0, 255, 0), cv::FILLED);
-        cv::imshow("result",img);
-        cv::waitKey(1);
-        cv::putText(img, std::to_string(classId), cv::Point(box.x, box.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
+    std::vector<Detection> result;
+    for (int i = 0; i < output.size(); i++) {
+        if (output[i].confidence > 0.6) {
+            auto detection = output[i];
+            auto box = detection.box;
+            auto classId = detection.class_id;
+            auto confidence = detection.confidence;
+            float rx = (float) img.cols / (float) (res.resized_image.cols - res.dw);
+            float ry = (float) img.rows / (float) (res.resized_image.rows - res.dh);
+            box.x = rx * box.x;
+            box.y = ry * box.y;
+            box.width = rx * box.width;
+            box.height = ry * box.height;
+            cout << "Bbox" << i + 1 << ": Class: " << classId << " "
+                 << "Confidence: " << confidence << " Scaled coords: [ "
+                 << "cx: " << (float) (box.x + (box.width / 2)) / img.cols << ", "
+                 << "cy: " << (float) (box.y + (box.height / 2)) / img.rows << ", "
+                 << "w: " << (float) box.width / img.cols << ", "
+                 << "h: " << (float) box.height / img.rows << " ]" << endl;
+            float xmax = box.x + box.width;
+            float ymax = box.y + box.height;
+            cv::rectangle(img, cv::Point(box.x, box.y), cv::Point(xmax, ymax), cv::Scalar(0, 255, 0), 3);
+            cv::rectangle(img, cv::Point(box.x, box.y - 20), cv::Point(xmax, box.y), cv::Scalar(0, 255, 0), cv::FILLED);
+            cv::imshow("result", img);
+            cv::waitKey(1);
+            cv::putText(img, std::to_string(classId), cv::Point(box.x, box.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5,
+                        cv::Scalar(0, 0, 0));
+            result.push_back(output[i]);
+        }
     }
+
     cv::imwrite("./detection_cpp.png", img);
 
-    return 0;
+    return result;
 }

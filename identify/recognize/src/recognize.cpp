@@ -26,15 +26,16 @@ using namespace zbar;
 
 Mat img_show;
 ros::Publisher image_pub;
-image_processing _img;
+image_processing depth_img;
 vector<decodedObject> decode_rec;
-EasyTemplate _temp;
-Mat test1 = imread("/home/robin/3.jpg");
+image_processing _img;
+Mat test1 = imread("/home/robin/1.jpg");
 Mat test2 = imread("/home/nuaa/wolf_big.jpg");
+ov::CompiledModel final_model;
 
-yolo _yolov5;
 void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
     recognize::image _image;
+    cv::Rect final_box;
     ros::Time start = ros::Time::now();
     try
     {
@@ -49,23 +50,42 @@ void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
+
+/*             //barcode and qrcode
+
     //_img.decode(img_show,decode_rec); // recognize the code
     //decode_rec.clear(); // don't forget to clear the vector
-    //_img.image_threshold(img_show);
+
+*/
+
+    _img.image_threshold(img_show);
     //_img.tool_tohsv(img_show);
 
-//    Rect _roi;
-//    float _i = 0.4;
-//    Mat display = test1.clone();
-//    _temp.Mark(img_show, true);
-//    _temp.Match(test1, _roi,_i);
-//
-//    Point center={_roi.width,_roi.height};
-//    cv::circle(img_show,center,50,Scalar(200, 255, 200),6);
-//    imshow("display",img_show);
-//    waitKey(1);
-    yolov5_identify(img_show,_yolov5);
+
+/*                     //Yolov5
+    std::vector<Detection> yolov5_res = yolov5_identify(img_show,final_model);
+    if(yolov5_res.size()>1 && yolov5_res.size()!=0){
+        float max_con = 0;
+        int max_id = 0;
+        for(int i = 0; i > yolov5_res.size(); i++){
+            if(yolov5_res[i].confidence>max_con){
+                max_con = yolov5_res[i].confidence;
+                max_id = i;
+            }
+        }
+        final_box = yolov5_res[max_id].box;
+    }else if(yolov5_res.size()==1){
+        final_box = yolov5_res[0].box;
+    }
+*/
+
     std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
+    depth_img.target.x = 1;
+    depth_img.target.y = 1;
+    _image.mode = 1;
+    _image.type = 1;
+    _image.x = final_box.x;
+    _image.y = final_box.y;
     image_pub.publish(_image);
 }
 
@@ -73,19 +93,19 @@ void Depth_cb(const sensor_msgs::ImageConstPtr &msg) {
     cv_bridge::CvImagePtr Dest ;
     Dest = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::TYPE_16UC1);
     cv::Mat depth_pic = Dest->image;
-    ushort d = depth_pic.at<ushort>(_img.point);           //读取深度值，数据类型为ushort单位为ｍｍ
-    float d_value = float(d)/1000 ;      //强制转换
+    float d = depth_pic.at<float>(depth_img.target);           //读取深度值，数据类型为ushort单位为ｍｍ
+    float d_value = d/10 ;      //强制转换
     cout<< "Value of depth_pic's pixel= "<<d_value<<endl;    //读取深度值
+
 }
 int main(int argc, char **argv) {
     ros::init(argc, argv, "recognize");
     ros::NodeHandle n;
-    ros::Subscriber resultsSub = n.subscribe("/camera/color/image_raw", 1, &Image_cb);
-    ros::Subscriber DepthSub = n.subscribe("/camera/depth/image_rect_raw", 1, &Depth_cb);
-    image_pub = n.advertise<recognize::image>("/image/write", 1);
+    ros::Subscriber resultsSub = n.subscribe("/camera/color/image_raw", 10, &Image_cb);
+    ros::Subscriber DepthSub = n.subscribe("/camera/aligned_depth_to_color/image_raw", 10, &Depth_cb);
+    image_pub = n.advertise<recognize::image>("/image/write", 10);
 
-    _yolov5.readNet("/home/robin/best.onnx");
-
+    final_model = yolo_init("/home/robin/yolov5/runs/train/exp2/weights/best.xml");
     ros::Time start = ros::Time::now();
 
 //the test of match_template
