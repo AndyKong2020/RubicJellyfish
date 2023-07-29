@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   std_msgs
   nav_msgs
+        message_generation
 )
 
 find_package(Eigen3 REQUIRED)
@@ -20,7 +21,8 @@ find_package(Eigen3 REQUIRED)
 add_message_files(
         FILES
         pose_mode.msg
-        velocity_mode.msg)
+        velocity_mode.msg
+)
 
 generate_messages(
         DEPENDENCIES
@@ -120,6 +122,7 @@ generate_messages(
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES scheduler
+        CATKIN_DEPENDS message_runtime
 )
 
 ###########

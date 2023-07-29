@@ -6,6 +6,7 @@
 #define SRC_TASK_H
 #include <vector>
 #include <Eigen/Core>
+#include <ros/ros.h>
 #include "angles/angles.h"
 #include "Drone.h"
 

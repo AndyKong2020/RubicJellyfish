@@ -6,6 +6,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <iostream>
+#include "std_msgs/UInt8.h"
 #include "scheduler/pose_mode.h"
 #include "scheduler/velocity_mode.h"
 #include "scheduler/Drone.h"
@@ -13,14 +14,23 @@
 
 ros::Publisher pose_mode_pub;
 ros::Publisher velocity_mode_pub;
+ros::Publisher task_id_pub;
 
 scheduler::pose_mode pose;
+
+std_msgs::UInt8 current_task_id;
 
 DronePose target_pose;
 RouteTask *route_task01 = nullptr;
 
-DronePose route_point00;
+DronePose route_point00, route_point01;
 
+
+void sendTaskId(const int & task_id)
+{
+    current_task_id.data = task_id;
+    task_id_pub.publish(current_task_id);
+}
 
 void sendPosition(scheduler::pose_mode &_pose){
 
@@ -68,8 +78,15 @@ void t265Callback(const nav_msgs::Odometry::ConstPtr & msg) {
     Eigen::Vector3d angular_velocity(msg->twist.twist.angular.x, msg->twist.twist.angular.y, msg->twist.twist.angular.z);
     drone.setVelocity(linear_velocity);
     drone.setAngularVelocity(angular_velocity);
+}
 
-    sendPosition(pose);
+void setParams(){
+    route_point00.position = Eigen::Vector3d(0.5, 0, 0);
+    route_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_point01.position = Eigen::Vector3d(0, 0.5, 0);
+    route_point01.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_task01 -> addToRouteList(route_point00);
+    route_task01 -> addToRouteList(route_point01);
 
 }
 
@@ -80,26 +97,29 @@ int main(int argc, char **argv) {
     drone.init();
     target_pose.position = Eigen::Vector3d::Zero();
     target_pose.angular_orientation = Eigen::Vector3d::Zero();
+
     route_task01 = new RouteTask(1);
-    route_point00.position = Eigen::Vector3d(1, 0, 0);
-    route_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_task01 -> addToRouteList(route_point00);
+
+
     pose_mode_pub = nh.advertise<scheduler::pose_mode>("/t265/pos", 1);
+    task_id_pub = nh.advertise<std_msgs::UInt8>("/task_id", 1);
     //velocity_mode_pub = nh.advertise<scheduler::velocity_mode>("/t265/velocity", 1);
+
+    setParams();
 
     ros::Subscriber t265_sub = nh.subscribe("/camera/odom/sample", 10, t265Callback);
     ros::Rate loop_rate(200);
+    ros::Rate control_rate(200);
     while (ros::ok()) {
-        //std::cout << drone.getAngularOrientation() << std::endl;
-
-        //sendVelocity(velocity);
+        sendTaskId(0);
         while (!route_task01->isRouteFinished()){
+            sendTaskId(route_task01 -> getTaskId());
             target_pose = route_task01 -> runTask();
-            std::cout << target_pose.position << std::endl;
-
+            sendPosition(pose);
+            ROS_INFO("approaching to point NO_%d", route_task01 -> getCurrentRouteIndex());
+            control_rate.sleep();
         }
-
-        std::cout << "route finished" << std::endl;
+        ROS_WARN("RouteTask01 Finished");
 
         ros::spinOnce();
         loop_rate.sleep();
