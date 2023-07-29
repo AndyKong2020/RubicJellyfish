@@ -1,4 +1,7 @@
 <launch>
    <node pkg="scheduler" type="scheduler_node" output="screen" name="scheduler" respawn="true" />
    <node pkg="serial_common" type="serial_common_node" output="screen" name="serial_common" respawn="true" />
+
+    <include file="$(find realsense2_camera)/launch/rs_t265.launch">
+    </include>
 </launch>
