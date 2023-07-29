@@ -1,4 +1,5 @@
 uint8 mode
 uint8 type
-float32 x
-float32 y
+float32 depth
+uint8 x
+uint8 y

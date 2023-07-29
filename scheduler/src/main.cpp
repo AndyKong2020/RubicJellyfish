@@ -6,11 +6,14 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <iostream>
+#include <sensor_msgs/Image.h>
 #include "std_msgs/UInt8.h"
 #include "scheduler/pose_mode.h"
 #include "scheduler/velocity_mode.h"
 #include "scheduler/Drone.h"
 #include "scheduler/Task.h"
+#include "serial_common/gimbal.h"
+#include "recognize/image.h"
 
 ros::Publisher pose_mode_pub;
 ros::Publisher velocity_mode_pub;
@@ -22,9 +25,12 @@ std_msgs::UInt8 current_task_id;
 
 DronePose target_pose;
 RouteTask *route_task01 = nullptr;
+PointTask *point_task_img = nullptr;
 
 DronePose route_point00, route_point01;
+Drone_img drone_img;
 
+float h;
 
 void sendTaskId(const int & task_id)
 {
@@ -69,6 +75,9 @@ void sendPosition(scheduler::pose_mode &_pose){
 //
 //    velocity_mode_pub.publish(velocity);
 //}
+void getTarget(){
+
+}
 void t265Callback(const nav_msgs::Odometry::ConstPtr & msg) {
     Eigen::Vector3d position(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
     Eigen::Quaterniond qtn_orientation(msg->pose.pose.orientation.w, msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, msg->pose.pose.orientation.z);
@@ -89,6 +98,19 @@ void setParams(){
     route_task01 -> addToRouteList(route_point01);
 
 }
+void imuCallback(const serial_common::gimbalConstPtr &msg) {   //change drone_control imu to camera imu
+//    Eigen::Quaterniond quaternion(msg->quaw,msg->qua,msg->quay,msg->quaz);
+//    Eigen::Vector3d eulerAngle=quaternion.matrix().eulerAngles(0,1,2);
+//    drone_control.roll = eulerAngle.x();
+//    drone_control.pitch = eulerAngle.y();
+
+    drone.setHeight(msg->z);
+}
+void imgCallback(const recognize::imageConstPtr &msg) {   //change drone_control imu to camera imu
+    drone_img.setDepth(msg->x,msg->y,msg->depth);
+    img_target.img = drone_img.getPoint();
+    img_target.plane_depth = drone_img.getDis();
+}
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "scheduler");
@@ -103,6 +125,8 @@ int main(int argc, char **argv) {
 
     pose_mode_pub = nh.advertise<scheduler::pose_mode>("/t265/pos", 1);
     task_id_pub = nh.advertise<std_msgs::UInt8>("/task_id", 1);
+    ros::Subscriber imu = nh.subscribe("/imu_show",10,imuCallback);
+    ros::Subscriber img = nh.subscribe("/image/write",10,imgCallback);
     //velocity_mode_pub = nh.advertise<scheduler::velocity_mode>("/t265/velocity", 1);
 
     setParams();
@@ -120,7 +144,7 @@ int main(int argc, char **argv) {
             control_rate.sleep();
         }
         ROS_WARN("RouteTask01 Finished");
-
+        point_task_img->ImageTask();
         ros::spinOnce();
         loop_rate.sleep();
     }

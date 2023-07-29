@@ -193,7 +193,7 @@ int image_processing::image_threshold(const Mat& srcImg){
     // Convert from BGR to HSV colorspace
     cvtColor(srcImg, midImg, COLOR_BGR2HSV);
     // Detect the object based on HSV Range Values
-    inRange(midImg, Scalar(0, 0, 114), Scalar(180, 255, 240), frame_threshold);
+    inRange(midImg, Scalar(0, 57, 254), Scalar(180, 255, 255), frame_threshold);
     //	灰度化
     //cvtColor(frame_threshold, midImg,COLOR_BGR2GRAY);     //灰度图
     //	中值滤波
@@ -226,7 +226,7 @@ int image_processing::image_threshold(const Mat& srcImg){
 //    morphologyEx(midImg, midImg, MORPH_CLOSE, element_size,Point(-1, -1), 2);
 //    namedWindow("【闭运算后】", WINDOW_NORMAL);
 //    imshow("【闭运算后】", midImg);
-    //find_centre(srcImg,midImg);
+    find_centre(srcImg,midImg);
 }
 
 

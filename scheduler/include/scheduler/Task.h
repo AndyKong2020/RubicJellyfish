@@ -43,7 +43,9 @@ class PointTask : public Task
 {
 public:
     explicit PointTask(const int & task_id);
+    void ImageTask();
     DronePose runTask() override;
+
 private:
     Eigen::Vector3d accumulative_error;
     DronePose point;

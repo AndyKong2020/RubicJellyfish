@@ -30,13 +30,14 @@ robot::RobotSerial serial;
 
 float recommend_pitch = 0.0;
 
+message_data down_control{
+    uint8_t on_switch;
+    uint8_t light;
+    uint8_t duo;
+};
 message_data autoaim{
         float yaw, pitch, w_yaw, w_pitch;
         uint8_t target_rate, target_number;
-};
-
-message_data spin_speed{
-        int16_t spinning_speed;
 };
 
 message_data exchangestation{
@@ -49,9 +50,6 @@ message_data imu{
         float_t qx, qy, qz, qw;
 };
 
-message_data chassis{
-        int16_t vx, vy, wz;
-};
 
 message_data odometry{
         int x, y, yaw;
@@ -67,23 +65,18 @@ message_data dialSwitch{
     uint8_t flag,is3big,is4big,is5big;
 };
 
-chassis c_rc{
-        .vx = (int16_t) 0,
-        .vy = (int16_t) 0,
-        .wz = (int16_t) 0
-};
-
-void spin_speed_callback(const serial_robot::spinning_control &msg) {
-    spin_speed spin_t{
-            .spinning_speed = (int16_t) (msg.spinning_speed),
-    };
-    serial.write(0x85, spin_t);
-}
 
 void logic_pitch_callback(const std_msgs::Float32::ConstPtr &msg) {
     recommend_pitch = msg->data;
 }
-
+void downcallback(const serial_robot::aim &msg){
+    down_control down{
+        .on_switch = 0, //
+        .light = 0,
+        .duo = 0,
+    };
+    serial.write(0x82,down);
+}
 void aimcallback(const serial_robot::aim &msg) {
     autoaim aim{
             .yaw = (float) (msg.yaw),
@@ -127,23 +120,17 @@ void imucallback(const imu &msg) {
     imuPub.publish(_imu);
 }
 
-void chassisCallback(const geometry_msgs::Twist::ConstPtr &msg) {
-    chassis c{
-            .vx = (int16_t) (msg->linear.y * 2008) + c_rc.vy,
-            .vy = (int16_t) (msg->linear.x * 2008) + c_rc.vx,
-            .wz = (int16_t) (msg->angular.z * -1507) + c_rc.wz
-//            .wz = (int16_t) 0 + c_rc.wz //测试导航不跟头使用
+void test(void ){
+    autoaim aim{
+            .yaw = 2.0f,
+            .pitch = 1.0f,
+            .w_yaw = 1.0f,
+            .w_pitch = 1.0f,
+            .target_rate = 1,
+            .target_number = 1,
     };
-    serial.write(0x82, c);
-//    std::cout << "speed:" << c.vx << " " << c.vy << " " << c.wz << std::endl;
-}
-
-void Key_RC_Callback(const geometry_msgs::Twist::ConstPtr &msg) {//遥控
-    c_rc.vx = (int16_t) (msg->linear.x * 2008);
-    c_rc.vy = (int16_t) (msg->linear.y * 2008);
-    c_rc.wz = (int16_t) (msg->angular.z * -1507);
-//    c_rc.wz = (int16_t) 0;
-    serial.write(0x82, c_rc);
+    std::cout << aim.yaw << aim.pitch << aim.target_rate << std::endl;
+    serial.write(0x81, aim);
 }
 
 void odomCallback(const odometry &msg) {
@@ -165,7 +152,7 @@ void gimbalCallback(const kalman &msg) {
     _gimbal.roll = msg.roll;
     _gimbal.yaw = msg.yaw;
     _gimbal.bullet = msg.bullet;
-//    std::cout<<_gimbal.yaw<<_gimbal.pitch<<_gimbal.roll<< std::endl;
+    std::cout<<_gimbal.yaw<<_gimbal.pitch<<_gimbal.roll<< std::endl;
     gimbal.publish(_gimbal);
 }
 
@@ -200,12 +187,10 @@ int main(int argc, char **argv) {
     std::cout << "Using serial port: " << serial_name << std::endl;
     serial = std::move(robot::RobotSerial(serial_name, 115200));
 
-    ros::Subscriber chassis_con = nh.subscribe("/cmd_vel", 1, chassisCallback);
-    ros::Subscriber chassis_key_RC = nh.subscribe("/cmd_vel_RC", 1, Key_RC_Callback);
     ros::Subscriber auto_aim = nh.subscribe("/robot/auto_aim", 1, aimcallback);
     ros::Subscriber logic_pitch = nh.subscribe("/robot/logic_recommend_angle", 1, logic_pitch_callback);
-    ros::Subscriber spinning_speeder = nh.subscribe("/robot/spnning_speed", 1, spin_speed_callback);
     ros::Subscriber exchange_sub = nh.subscribe("/robot/exchange", 1, exchangecallback);
+    ros::Subscriber down_sub = nh.subscribe("/drone/down", 1, downcallback);
 
     serial.registerErrorHandle([](int label, const std::string &text) {  //日志记录
         robot::RobotSerial::error _label;
@@ -221,6 +206,7 @@ int main(int argc, char **argv) {
                 ROS_ERROR_STREAM(_str.str());
             case robot::RobotSerial::rxLessThanLength:
                 ROS_WARN_STREAM("rxLessThanLength");
+                //ROS_ERROR_STREAM(_str.str());
                 break;
             case robot::RobotSerial::crcError:
                 ROS_ERROR_STREAM("crcError");
@@ -248,4 +234,12 @@ int main(int argc, char **argv) {
 
     serial.spin(true);
     ros::spin();
+//    ros::Rate loop_rate(400);
+//    while(ros::ok())
+//    {
+//        test();
+//        sleep(1);
+//        ros::spinOnce();
+//        loop_rate.sleep();
+//    }
 }

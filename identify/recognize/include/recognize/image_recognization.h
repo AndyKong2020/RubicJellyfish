@@ -25,19 +25,12 @@ using namespace cv;
 
 class image_recognization {
 public :
-
-    Mat cameraMatrix;
-
-    int tracked_num = 0;
-    ModelManager modelManager;
-    void Picture_process(image_recognization &image);
-    Mat img_gray, img_bgr, img_hsv, img_h, led_mask, img_out;
-    Mat target_coor;
-    Mat img_show, ROI_bgr, coordinate, NUM_bgr, Image;
-    Point2f target;
-
-    map<int, int> HP;
-
+    uint8_t img_x;
+    uint8_t img_y;
+    float height;
+    float depth;
+    float plane_depth;
+    void setDepth(const uint8_t img_x,const uint8_t img_y,const float depth);
 
 };
 #endif //SRC_IMAGE_RECOGNIZATION_H

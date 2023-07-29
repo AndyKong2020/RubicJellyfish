@@ -122,5 +122,16 @@ PointTask::PointTask(const int &task_id) : Task(task_id) {
 
 }
 
+void PointTask::ImageTask() {
+    const int width = 1280;
+    const int height = 720;
+    cv::Point image_error;
+    image_error.x = height/2 - img_target.img.y;
+    image_error.y = width/2 - img_target.img.x;
+    float s = sqrtf(image_error.x*image_error.x+image_error.y*image_error.y);
+    image_error.x = image_error.x / s;
+    image_error.y = image_error.y / s;
+}
+
 DronePose PointTask::runTask() {
 }

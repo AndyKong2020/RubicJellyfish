@@ -7,8 +7,10 @@
 
 #include <iostream>
 #include <Eigen/Core>
+#include <opencv4/opencv2/core/types.hpp>
 #include <boost/serialization/singleton.hpp>
 #include <Eigen/Geometry>
+#include <opencv4/opencv2/core/types.hpp>
 
 #define drone Drone::get_mutable_instance()
 
@@ -25,7 +27,23 @@ typedef struct
     Eigen::Vector3d angular_velocity;
 } DroneTwist;
 
+typedef struct
+{
+    cv::Point img;
+    float depth;
+    float plane_depth;
+} imageTarget;
+imageTarget img_target;
 
+class Drone_img{
+    cv::Point img;
+    float depth;
+    float plane_depth;
+public:
+    void setDepth(const uint8_t _img_x,const uint8_t _img_y,const float _depth);
+    float getDis() const;
+    cv::Point getPoint() const;
+};
 class Drone: public boost::serialization::singleton<Drone>
 {
 public:
@@ -36,6 +54,7 @@ public:
     void setAngularOrientation(const Eigen::Vector3d & _angular_orientation);
     void setAngularVelocity(const Eigen::Vector3d & _angular_velocity);
     void setAccumulativeError(const Eigen::Vector3d & _convinced_position);
+    void setHeight(const float _height);
     static Eigen::Vector3d ToEulerAngles(const Eigen::Quaterniond& q);
     Eigen::Vector3d getPosition() const;
     Eigen::Vector3d getVelocity() const;
@@ -44,6 +63,7 @@ public:
     Eigen::Vector3d getAngularVelocity() const;
     DronePose getPose() const;
     DroneTwist getTwist() const;
+    float getHeight() const;
 private:
     Eigen::Vector3d position_accumulative_error;
     Eigen::Vector3d position;
@@ -51,5 +71,6 @@ private:
     Eigen::Quaterniond qtn_orientation;
     Eigen::Vector3d angular_orientation;
     Eigen::Vector3d angular_velocity;
+    float height;
 };
 #endif //SRC_DRONE_H
