@@ -38,7 +38,7 @@ void sendTaskId(const int & task_id)
     task_id_pub.publish(current_task_id);
 }
 
-void sendPosition(scheduler::pose_mode &_pose){
+void sendPosition(scheduler::pose_mode &_pose,float error_x,float error_y){
 
     _pose.self_x = drone.getPosition().x();
     _pose.self_y = drone.getPosition().y();
@@ -47,8 +47,8 @@ void sendPosition(scheduler::pose_mode &_pose){
     _pose.self_pitch = drone.getAngularOrientation().y();
     _pose.self_yaw = drone.getAngularOrientation().z();
 
-    _pose.target_x = (float)target_pose.position.x();
-    _pose.target_y = (float)target_pose.position.y();
+    _pose.target_x = (float)target_pose.position.x()+error_x;
+    _pose.target_y = (float)target_pose.position.y()+error_y;
     _pose.target_z = (float)target_pose.position.z();
     _pose.target_roll = (float)target_pose.angular_orientation.x();
     _pose.target_pitch = (float)target_pose.angular_orientation.y();
@@ -75,9 +75,7 @@ void sendPosition(scheduler::pose_mode &_pose){
 //
 //    velocity_mode_pub.publish(velocity);
 //}
-void getTarget(){
 
-}
 void t265Callback(const nav_msgs::Odometry::ConstPtr & msg) {
     Eigen::Vector3d position(msg->pose.pose.position.x, msg->pose.pose.position.y, msg->pose.pose.position.z);
     Eigen::Quaterniond qtn_orientation(msg->pose.pose.orientation.w, msg->pose.pose.orientation.x, msg->pose.pose.orientation.y, msg->pose.pose.orientation.z);
@@ -139,12 +137,16 @@ int main(int argc, char **argv) {
         while (!route_task01->isRouteFinished()){
             sendTaskId(route_task01 -> getTaskId());
             target_pose = route_task01 -> runTask();
-            sendPosition(pose);
+            sendPosition(pose,0,0);
             ROS_INFO("approaching to point NO_%d", route_task01 -> getCurrentRouteIndex());
             control_rate.sleep();
         }
         ROS_WARN("RouteTask01 Finished");
-        point_task_img->ImageTask();
+        while (!point_task_img->isPointOver()){
+            point_task_img->error_fix = point_task_img->ImageTask();
+            sendPosition(pose,point_task_img->error_fix.x,point_task_img->error_fix.y);
+        }
+        ROS_WARN("Image error fix Finished");
         ros::spinOnce();
         loop_rate.sleep();
     }

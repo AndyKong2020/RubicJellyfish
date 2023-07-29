@@ -43,9 +43,11 @@ class PointTask : public Task
 {
 public:
     explicit PointTask(const int & task_id);
-    void ImageTask();
+    cv::Point2f ImageTask();
     DronePose runTask() override;
-
+    bool isPointOver() const;
+    cv::Point2f image_error;
+    cv::Point2f error_fix;
 private:
     Eigen::Vector3d accumulative_error;
     DronePose point;
