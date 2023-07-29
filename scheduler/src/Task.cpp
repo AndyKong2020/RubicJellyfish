@@ -92,6 +92,7 @@ DronePose RouteTask::runTask() {
     {
         if (pose_match(drone.getPose(), route_list[route_index]))
         {
+            ROS_WARN("RouteTask %d: Arrived at route point %d", task_id, route_index);
             return nextRoutePoint();
         }
         else
