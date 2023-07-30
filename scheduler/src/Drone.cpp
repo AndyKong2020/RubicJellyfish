@@ -39,7 +39,7 @@ void Drone::setAngularVelocity(const Eigen::Vector3d & _angular_velocity)
     angular_velocity = _angular_velocity;
 }
 
-void Drone::setHeight(const float _height)
+void Drone::setHeight(const double & _height)
 {
      height = _height;
 }

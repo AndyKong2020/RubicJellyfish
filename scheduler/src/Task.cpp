@@ -87,7 +87,6 @@ int RouteTask::getRouteListSize() const
 }
 
 DronePose RouteTask::runTask() {
-    route_index = 0;
     while(route_index < route_list.size())
     {
         if (pose_match(drone.getPose(), route_list[route_index]))
@@ -100,6 +99,7 @@ DronePose RouteTask::runTask() {
             return route_list[route_index];
         }
     }
+    ROS_WARN("RouteTask %d: Route finished", task_id);
 }
 
 RouteTask::RouteTask(const int &task_id) : Task(task_id) {
@@ -122,7 +122,7 @@ PointTask::PointTask(const int &task_id) : Task(task_id) {
 
 }
 
-cv::Point2f PointTask::ImageTask() {
+cv::Point2f  PointTask::ImageTask(const imageTarget& img_target) {
     const int width = 1280;
     const int height = 720;
     image_error.x = height/2 - img_target.img.y;
@@ -147,3 +147,56 @@ bool PointTask::isPointOver() const {
 }
 DronePose PointTask::runTask() {
 }
+
+TakeOffTask::TakeOffTask(const int &task_id) : Task(task_id) {
+    take_off_point_on_land.position = Eigen::Vector3d::Zero();
+    take_off_point_on_land.angular_orientation = Eigen::Vector3d::Zero();
+    take_off_point_in_air.position = Eigen::Vector3d::Zero();
+    take_off_point_in_air.angular_orientation = Eigen::Vector3d::Zero();
+    take_off_height = 0;
+}
+
+void TakeOffTask::setTakeOffPoint(const DronePose &take_off_point) {
+    take_off_point_on_land = take_off_point;
+}
+
+void TakeOffTask::setTakeOffHeight(const double &height) {
+    take_off_height = height;
+    take_off_point_in_air = take_off_point_on_land;
+    take_off_point_in_air.position.z() += height;
+}
+
+inline bool height_match(const DronePose & a, const DronePose & b)
+{
+    return abs(a.position.z() - b.position.z()) < 0.02;
+}
+
+DronePose TakeOffTask::runTask() {
+    if (height_match(drone.getPose(), take_off_point_in_air))
+    {
+        ROS_WARN("TakeOffTask %d: Arrived at take off point", task_id);
+        return take_off_point_in_air;
+    }
+    else
+    {
+        return take_off_point_in_air;
+    }
+}
+
+bool TakeOffTask::isTakeOffFinished() const {
+    if (height_match(drone.getPose(), take_off_point_in_air))
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+
+double TakeOffTask::getTakeOffHeight() const {
+    return take_off_height;
+}
+
+

@@ -17,7 +17,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 find_package(Eigen3 REQUIRED)
-
+find_package(OpenCV 4 REQUIRED)
 add_message_files(
         FILES
         pose_mode.msg
@@ -135,6 +135,7 @@ include_directories(
         include
         ${catkin_INCLUDE_DIRS}
         ${EIGEN3_INCLUDE_DIRS}
+        ${OpenCV_INCLUDE_DIRS}
 
 )
 

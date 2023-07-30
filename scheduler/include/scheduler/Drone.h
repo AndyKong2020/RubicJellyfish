@@ -7,7 +7,6 @@
 
 #include <iostream>
 #include <Eigen/Core>
-#include <opencv4/opencv2/core/types.hpp>
 #include <boost/serialization/singleton.hpp>
 #include <Eigen/Geometry>
 #include <opencv4/opencv2/core/types.hpp>
@@ -33,7 +32,6 @@ typedef struct
     float depth;
     float plane_depth;
 } imageTarget;
-imageTarget img_target;
 
 class Drone_img{
     cv::Point img;
@@ -43,6 +41,7 @@ public:
     void setDepth(const uint8_t _img_x,const uint8_t _img_y,const float _depth);
     float getDis() const;
     cv::Point getPoint() const;
+    imageTarget img_target;
 };
 class Drone: public boost::serialization::singleton<Drone>
 {
@@ -54,7 +53,7 @@ public:
     void setAngularOrientation(const Eigen::Vector3d & _angular_orientation);
     void setAngularVelocity(const Eigen::Vector3d & _angular_velocity);
     void setAccumulativeError(const Eigen::Vector3d & _convinced_position);
-    void setHeight(const float _height);
+    void setHeight(const double & _height);
     static Eigen::Vector3d ToEulerAngles(const Eigen::Quaterniond& q);
     Eigen::Vector3d getPosition() const;
     Eigen::Vector3d getVelocity() const;
@@ -71,6 +70,6 @@ private:
     Eigen::Quaterniond qtn_orientation;
     Eigen::Vector3d angular_orientation;
     Eigen::Vector3d angular_velocity;
-    float height;
+    double height;
 };
 #endif //SRC_DRONE_H

@@ -24,13 +24,16 @@ scheduler::pose_mode pose;
 std_msgs::UInt8 current_task_id;
 
 DronePose target_pose;
+imageTarget img_target;
+
+TakeOffTask *take_off_task00 = nullptr;
 RouteTask *route_task01 = nullptr;
 PointTask *point_task_img = nullptr;
 
-DronePose route_point00, route_point01;
+DronePose route_point00, route_point01, route_point02, take_off_point00;
+double take_off_height00;
 Drone_img drone_img;
 
-float h;
 
 void sendTaskId(const int & task_id)
 {
@@ -38,17 +41,17 @@ void sendTaskId(const int & task_id)
     task_id_pub.publish(current_task_id);
 }
 
-void sendPosition(scheduler::pose_mode &_pose,float error_x,float error_y){
+void sendPosition(scheduler::pose_mode &_pose){
 
     _pose.self_x = drone.getPosition().x();
     _pose.self_y = drone.getPosition().y();
-    _pose.self_z = drone.getPosition().z();
+    _pose.self_z = drone.getHeight();
     _pose.self_roll = drone.getAngularOrientation().x();
     _pose.self_pitch = drone.getAngularOrientation().y();
     _pose.self_yaw = drone.getAngularOrientation().z();
 
-    _pose.target_x = (float)target_pose.position.x()+error_x;
-    _pose.target_y = (float)target_pose.position.y()+error_y;
+    _pose.target_x = (float)target_pose.position.x();
+    _pose.target_y = (float)target_pose.position.y();
     _pose.target_z = (float)target_pose.position.z();
     _pose.target_roll = (float)target_pose.angular_orientation.x();
     _pose.target_pitch = (float)target_pose.angular_orientation.y();
@@ -88,12 +91,20 @@ void t265Callback(const nav_msgs::Odometry::ConstPtr & msg) {
 }
 
 void setParams(){
-    route_point00.position = Eigen::Vector3d(0.5, 0, 0);
+    take_off_point00.position = Eigen::Vector3d(0, 0, 0);
+    take_off_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    take_off_height00 = 1.2;
+    take_off_task00 -> setTakeOffPoint(take_off_point00);
+    take_off_task00 -> setTakeOffHeight(take_off_height00);
+    route_point00.position = Eigen::Vector3d(0.5, 0, 1.2);
     route_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point01.position = Eigen::Vector3d(0, 0.5, 0);
+    route_point01.position = Eigen::Vector3d(0.5, 0, 1.2);
     route_point01.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_point02.position = Eigen::Vector3d(0.5, 0.5, 1.2);
+    route_point02.angular_orientation = Eigen::Vector3d(0, 0, 0);
     route_task01 -> addToRouteList(route_point00);
     route_task01 -> addToRouteList(route_point01);
+    route_task01 -> addToRouteList(route_point02);
 
 }
 void imuCallback(const serial_common::gimbalConstPtr &msg) {   //change drone_control imu to camera imu
@@ -118,6 +129,7 @@ int main(int argc, char **argv) {
     target_pose.position = Eigen::Vector3d::Zero();
     target_pose.angular_orientation = Eigen::Vector3d::Zero();
 
+    take_off_task00 = new TakeOffTask(0);
     route_task01 = new RouteTask(1);
 
 
@@ -134,17 +146,27 @@ int main(int argc, char **argv) {
     ros::Rate control_rate(200);
     while (ros::ok()) {
         sendTaskId(0);
+        while (!take_off_task00->isTakeOffFinished()){
+            sendTaskId(take_off_task00 -> getTaskId());
+            target_pose = take_off_task00 -> runTask();
+            sendPosition(pose);
+            ROS_INFO("taking off to %f m", take_off_task00 -> getTakeOffHeight());
+            ros::spinOnce();
+            control_rate.sleep();
+        }
+
         while (!route_task01->isRouteFinished()){
             sendTaskId(route_task01 -> getTaskId());
             target_pose = route_task01 -> runTask();
-            sendPosition(pose,0,0);
+            sendPosition(pose);
             ROS_INFO("approaching to point NO_%d", route_task01 -> getCurrentRouteIndex());
+            ros::spinOnce();
             control_rate.sleep();
         }
         ROS_WARN("RouteTask01 Finished");
         while (!point_task_img->isPointOver()){
-            point_task_img->error_fix = point_task_img->ImageTask();
-            sendPosition(pose,point_task_img->error_fix.x,point_task_img->error_fix.y);
+            point_task_img->error_fix = point_task_img->ImageTask(img_target);
+            sendPosition(pose);
         }
         ROS_WARN("Image error fix Finished");
         ros::spinOnce();

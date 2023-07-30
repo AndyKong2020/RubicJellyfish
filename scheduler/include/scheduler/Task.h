@@ -7,6 +7,7 @@
 #include <vector>
 #include <Eigen/Core>
 #include <ros/ros.h>
+#include <chrono>
 #include "angles/angles.h"
 #include "Drone.h"
 
@@ -43,7 +44,7 @@ class PointTask : public Task
 {
 public:
     explicit PointTask(const int & task_id);
-    cv::Point2f ImageTask();
+    cv::Point2f ImageTask(const imageTarget& img_target);
     DronePose runTask() override;
     bool isPointOver() const;
     cv::Point2f image_error;
@@ -52,5 +53,20 @@ private:
     Eigen::Vector3d accumulative_error;
     DronePose point;
 
+};
+
+class TakeOffTask : public Task
+{
+public:
+    explicit TakeOffTask(const int & task_id);
+    void setTakeOffPoint(const DronePose & take_off_point);
+    void setTakeOffHeight(const double & height);
+    bool isTakeOffFinished() const;
+    double getTakeOffHeight() const;
+    DronePose runTask() override;
+private:
+    DronePose take_off_point_on_land;
+    double take_off_height;
+    DronePose take_off_point_in_air;
 };
 #endif //SRC_TASK_H
