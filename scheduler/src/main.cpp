@@ -30,7 +30,9 @@ TakeOffTask *take_off_task00 = nullptr;
 RouteTask *route_task01 = nullptr;
 PointTask *point_task_img = nullptr;
 
-DronePose route_point00, route_point01, route_point02, take_off_point00;
+DronePose take_off_point00;
+DronePose route_point00, route_point01, route_point02;
+DronePose stay_point00, stay_point01, stay_point02, stay_point03, stay_point04, stay_point05;
 double take_off_height00;
 Drone_img drone_img;
 
@@ -96,15 +98,19 @@ void setParams(){
     take_off_height00 = 1.2;
     take_off_task00 -> setTakeOffPoint(take_off_point00);
     take_off_task00 -> setTakeOffHeight(take_off_height00);
+    stay_point00.position = Eigen::Vector3d(0, 0, 1.2);
+    stay_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
     route_point00.position = Eigen::Vector3d(0.5, 0, 1.2);
     route_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point01.position = Eigen::Vector3d(0.5, 0, 1.2);
+    route_point01.position = Eigen::Vector3d(0.5, 0.5, 1.2);
     route_point01.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point02.position = Eigen::Vector3d(0.5, 0.5, 1.2);
+    route_point02.position = Eigen::Vector3d(0, 0.5, 1.2);
     route_point02.angular_orientation = Eigen::Vector3d(0, 0, 0);
     route_task01 -> addToRouteList(route_point00);
     route_task01 -> addToRouteList(route_point01);
     route_task01 -> addToRouteList(route_point02);
+    stay_point01.position = Eigen::Vector3d(0, 0.5, 1.2);
+    stay_point01.angular_orientation = Eigen::Vector3d(0, 0, 0);
 
 }
 void imuCallback(const serial_common::gimbalConstPtr &msg) {   //change drone_control imu to camera imu
@@ -120,6 +126,19 @@ void imgCallback(const recognize::imageConstPtr &msg) {   //change drone_control
     img_target.img = drone_img.getPoint();
     img_target.plane_depth = drone_img.getDis();
 }
+
+void stay(const DronePose & _pose, const double & time){
+    target_pose.position = _pose.position;
+    target_pose.angular_orientation = _pose.angular_orientation;
+    ros::Rate rate(200);
+    double start_time = ros::Time::now().toSec();
+    while(ros::Time::now().toSec() - start_time < time){
+        sendPosition(pose);
+        ros::spinOnce();
+        rate.sleep();
+    }
+}
+
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "scheduler");
@@ -154,7 +173,9 @@ int main(int argc, char **argv) {
             ros::spinOnce();
             control_rate.sleep();
         }
-
+        ROS_WARN("TakeOffTask00 Finished");
+        stay(stay_point00, 2);
+        ROS_WARN("RouteTask01 Start");
         while (!route_task01->isRouteFinished()){
             sendTaskId(route_task01 -> getTaskId());
             target_pose = route_task01 -> runTask();
@@ -164,6 +185,7 @@ int main(int argc, char **argv) {
             control_rate.sleep();
         }
         ROS_WARN("RouteTask01 Finished");
+        stay(stay_point01, 20);
         while (!point_task_img->isPointOver()){
             point_task_img->error_fix = point_task_img->ImageTask(img_target);
             sendPosition(pose);
