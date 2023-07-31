@@ -118,13 +118,13 @@ void imuCallback(const serial_common::gimbalConstPtr &msg) {   //change drone_co
 //    Eigen::Vector3d eulerAngle=quaternion.matrix().eulerAngles(0,1,2);
 //    drone_control.roll = eulerAngle.x();
 //    drone_control.pitch = eulerAngle.y();
-
     drone.setHeight(msg->z);
 }
 void imgCallback(const recognize::imageConstPtr &msg) {   //change drone_control imu to camera imu
     drone_img.setDepth(msg->x,msg->y,msg->depth);
     img_target.img = drone_img.getPoint();
     img_target.plane_depth = drone_img.getDis();
+    std::cout<<"plane_dis:"<< img_target.plane_depth<<std::endl;
 }
 
 void stay(const DronePose & _pose, const double & time){
@@ -159,33 +159,41 @@ int main(int argc, char **argv) {
     //velocity_mode_pub = nh.advertise<scheduler::velocity_mode>("/t265/velocity", 1);
 
     setParams();
-
+    Eigen::Vector3d position(0, 0, 0);
+    Eigen::Quaterniond qtn_orientation(0, 0, 0, 0);
+    drone.setPosition(position);
+    drone.setQtnOrientation(qtn_orientation);
+    Eigen::Vector3d linear_velocity(0, 0, 0);
+    Eigen::Vector3d angular_velocity(0, 0, 0);
+    drone.setVelocity(linear_velocity);
+    drone.setAngularVelocity(angular_velocity);
     ros::Subscriber t265_sub = nh.subscribe("/camera/odom/sample", 10, t265Callback);
     ros::Rate loop_rate(200);
     ros::Rate control_rate(200);
     while (ros::ok()) {
-        sendTaskId(0);
-        while (!take_off_task00->isTakeOffFinished()){
-            sendTaskId(take_off_task00 -> getTaskId());
-            target_pose = take_off_task00 -> runTask();
-            sendPosition(pose);
-            ROS_INFO("taking off to %f m", take_off_task00 -> getTakeOffHeight());
-            ros::spinOnce();
-            control_rate.sleep();
-        }
-        ROS_WARN("TakeOffTask00 Finished");
-        stay(stay_point00, 2);
-        ROS_WARN("RouteTask01 Start");
-        while (!route_task01->isRouteFinished()){
-            sendTaskId(route_task01 -> getTaskId());
-            target_pose = route_task01 -> runTask();
-            sendPosition(pose);
-            ROS_INFO("approaching to point NO_%d", route_task01 -> getCurrentRouteIndex());
-            ros::spinOnce();
-            control_rate.sleep();
-        }
-        ROS_WARN("RouteTask01 Finished");
-        stay(stay_point01, 20);
+        drone.setHeight(0.73);
+//        sendTaskId(0);
+//        while (!take_off_task00->isTakeOffFinished()){
+//            sendTaskId(take_off_task00 -> getTaskId());
+//            target_pose = take_off_task00 -> runTask();
+//            sendPosition(pose);
+//            ROS_INFO("taking off to %f m", take_off_task00 -> getTakeOffHeight());
+//            ros::spinOnce();
+//            control_rate.sleep();
+//        }
+//        ROS_WARN("TakeOffTask00 Finished");
+//        stay(stay_point00, 2);
+//        ROS_WARN("RouteTask01 Start");
+//        while (!route_task01->isRouteFinished()){
+//            sendTaskId(route_task01 -> getTaskId());
+//            target_pose = route_task01 -> runTask();
+//            sendPosition(pose);
+//            ROS_INFO("approaching to point NO_%d", route_task01 -> getCurrentRouteIndex());
+//            ros::spinOnce();
+//            control_rate.sleep();
+//        }
+//        ROS_WARN("RouteTask01 Finished");
+//        stay(stay_point01, 20);
         while (!point_task_img->isPointOver()){
             point_task_img->error_fix = point_task_img->ImageTask(img_target);
             sendPosition(pose);
