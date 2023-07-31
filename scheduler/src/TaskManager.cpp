@@ -9,12 +9,13 @@ TaskManager::TaskManager()
     task_index = 0;
 }
 
-void TaskManager::nextTask()
+int TaskManager::nextTask()
 {
     task_index++;
+    return task_index;
 }
 
-int TaskManager::getCurrentTask() const
+int TaskManager::getCurrentTaskId() const
 {
     return task_index;
 }
