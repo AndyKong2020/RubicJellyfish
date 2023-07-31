@@ -28,11 +28,13 @@ imageTarget img_target;
 
 TakeOffTask *take_off_task00 = nullptr;
 RouteTask *route_task01 = nullptr;
+LandTask *land_task02 = nullptr;
 PointTask *point_task_img = nullptr;
 
 DronePose take_off_point00;
 DronePose route_point00, route_point01, route_point02;
 DronePose stay_point00, stay_point01, stay_point02, stay_point03, stay_point04, stay_point05;
+DronePose land_point00;
 double take_off_height00;
 Drone_img drone_img;
 
@@ -66,12 +68,12 @@ void sendPosition(scheduler::pose_mode &_pose){
     _pose.self_wpitch = drone.getAngularVelocity().y();
     _pose.self_wyaw = drone.getAngularVelocity().z();
 
-    _pose.target_vx = 1;
-    _pose.target_vy = 1;
-    _pose.target_vz = 1;
-    _pose.target_wroll = 1;
-    _pose.target_wpitch = 1;
-    _pose.target_wyaw = 1;
+    _pose.target_vx = 0;
+    _pose.target_vy = 0;
+    _pose.target_vz = 0;
+    _pose.target_wroll = 0;
+    _pose.target_wpitch = 0;
+    _pose.target_wyaw = 0;
     pose_mode_pub.publish(_pose);
 }
 //void sendVelocity(scheduler::velocity_mode &velocity){
@@ -111,7 +113,9 @@ void setParams(){
     route_task01 -> addToRouteList(route_point02);
     stay_point01.position = Eigen::Vector3d(0, 0.5, 1.2);
     stay_point01.angular_orientation = Eigen::Vector3d(0, 0, 0);
-
+    land_point00.position = Eigen::Vector3d(0, 0.5, 0);
+    land_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    land_task02 -> setLandPoint(land_point00);
 }
 void imuCallback(const serial_common::gimbalConstPtr &msg) {   //change drone_control imu to camera imu
 //    Eigen::Quaterniond quaternion(msg->quaw,msg->qua,msg->quay,msg->quaz);
@@ -150,6 +154,7 @@ int main(int argc, char **argv) {
 
     take_off_task00 = new TakeOffTask(0);
     route_task01 = new RouteTask(1);
+    land_task02 = new LandTask(2);
 
 
     pose_mode_pub = nh.advertise<scheduler::pose_mode>("/t265/pos", 1);
@@ -186,11 +191,21 @@ int main(int argc, char **argv) {
         }
         ROS_WARN("RouteTask01 Finished");
         stay(stay_point01, 20);
-        while (!point_task_img->isPointOver()){
-            point_task_img->error_fix = point_task_img->ImageTask(img_target);
+        ROS_WARN("LandTask02 Start");
+        while (!LandTask::isLandFinished()){
+            sendTaskId(land_task02 -> getTaskId());
+            target_pose = land_task02 -> runTask();
             sendPosition(pose);
+            ROS_INFO("landing");
+            ros::spinOnce();
+            control_rate.sleep();
         }
-        ROS_WARN("Image error fix Finished");
+        ROS_WARN("LandTask02 Finished");
+//        while (!point_task_img->isPointOver()){
+//            point_task_img->error_fix = point_task_img->ImageTask(img_target);
+//            sendPosition(pose);
+//        }
+//        ROS_WARN("Image error fix Finished");
         ros::spinOnce();
         loop_rate.sleep();
     }

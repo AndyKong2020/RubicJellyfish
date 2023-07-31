@@ -119,7 +119,8 @@ bool RouteTask::isRouteFinished() const {
 
 
 PointTask::PointTask(const int &task_id) : Task(task_id) {
-
+    image_error.x = 0;
+    image_error.y = 0;
 }
 
 cv::Point2f  PointTask::ImageTask(const imageTarget& img_target) {
@@ -200,3 +201,34 @@ double TakeOffTask::getTakeOffHeight() const {
 }
 
 
+LandTask::LandTask(const int &task_id) : Task(task_id) {
+
+}
+
+bool LandTask::isLandFinished() {
+    if (drone.getPose().position.z() < -0.2)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+DronePose LandTask::runTask() {
+    if (drone.getPose().position.z() < -0.2)
+    {
+        ROS_WARN("LandTask %d: Arrived at land point", task_id);
+        return land_point;
+    }
+    else
+    {
+        return land_point;
+    }
+}
+
+void LandTask::setLandPoint(const DronePose &_land_point) {
+    land_point = _land_point;
+
+}

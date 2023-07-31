@@ -69,4 +69,15 @@ private:
     double take_off_height;
     DronePose take_off_point_in_air;
 };
+
+class LandTask : public Task
+{
+public:
+    explicit LandTask(const int & task_id);
+    static bool isLandFinished();
+    void setLandPoint(const DronePose & land_point);
+    DronePose runTask() override;
+private:
+    DronePose land_point;
+};
 #endif //SRC_TASK_H
