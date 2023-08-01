@@ -6,6 +6,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <iostream>
+#include <vector>
 #include <sensor_msgs/Image.h>
 #include "std_msgs/UInt8.h"
 #include "scheduler/pose_mode.h"
@@ -28,11 +29,13 @@ imageTarget img_target;
 
 TakeOffTask *take_off_task00 = nullptr;
 RouteTask *route_task01 = nullptr;
+LandTask *land_task02 = nullptr;
 PointTask *point_task_img = nullptr;
 
 DronePose take_off_point00;
-DronePose route_point00, route_point01, route_point02;
+DronePose route_point00, route_point01, route_point02, route_point03, route_point04, route_point05;
 DronePose stay_point00, stay_point01, stay_point02, stay_point03, stay_point04, stay_point05;
+DronePose land_point00;
 double take_off_height00;
 Drone_img drone_img;
 
@@ -66,12 +69,12 @@ void sendPosition(scheduler::pose_mode &_pose){
     _pose.self_wpitch = drone.getAngularVelocity().y();
     _pose.self_wyaw = drone.getAngularVelocity().z();
 
-    _pose.target_vx = 1;
-    _pose.target_vy = 1;
-    _pose.target_vz = 1;
-    _pose.target_wroll = 1;
-    _pose.target_wpitch = 1;
-    _pose.target_wyaw = 1;
+    _pose.target_vx = 0;
+    _pose.target_vy = 0;
+    _pose.target_vz = 0;
+    _pose.target_wroll = 0;
+    _pose.target_wpitch = 0;
+    _pose.target_wyaw = 0;
     pose_mode_pub.publish(_pose);
 }
 //void sendVelocity(scheduler::velocity_mode &velocity){
@@ -100,18 +103,23 @@ void setParams(){
     take_off_task00 -> setTakeOffHeight(take_off_height00);
     stay_point00.position = Eigen::Vector3d(0, 0, 1.2);
     stay_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point00.position = Eigen::Vector3d(0.5, 0, 1.2);
+    route_point00.position = Eigen::Vector3d(1, 0, 1.2);
     route_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point01.position = Eigen::Vector3d(0.5, 0.5, 1.2);
+    route_point01.position = Eigen::Vector3d(1, 1, 1.2);
     route_point01.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point02.position = Eigen::Vector3d(0, 0.5, 1.2);
+    route_point02.position = Eigen::Vector3d(0, 1, 1.2);
     route_point02.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_point03.position = Eigen::Vector3d(0, 0, 1.2);
+    route_point03.angular_orientation = Eigen::Vector3d(0, 0, 0);
     route_task01 -> addToRouteList(route_point00);
     route_task01 -> addToRouteList(route_point01);
     route_task01 -> addToRouteList(route_point02);
-    stay_point01.position = Eigen::Vector3d(0, 0.5, 1.2);
+    route_task01 -> addToRouteList(route_point03);
+    stay_point01.position = Eigen::Vector3d(0, 0, 1.2);
     stay_point01.angular_orientation = Eigen::Vector3d(0, 0, 0);
-
+    land_point00.position = Eigen::Vector3d(0, 0, -0.2);
+    land_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    land_task02 -> setLandPoint(land_point00);
 }
 void imuCallback(const serial_common::gimbalConstPtr &msg) {   //change drone_control imu to camera imu
 //    Eigen::Quaterniond quaternion(msg->quaw,msg->qua,msg->quay,msg->quaz);
@@ -139,6 +147,21 @@ void stay(const DronePose & _pose, const double & time){
     }
 }
 
+void runTask(const double & stay_time, Task * task){
+    ros::Rate control_rate(200);
+    ROS_WARN("Task%d Start", task -> getTaskId());
+    while (!task->isTaskFinished()){
+        sendTaskId(task -> getTaskId());
+        target_pose = task -> runTask();
+        sendPosition(pose);
+        task -> printLog();
+        ros::spinOnce();
+        control_rate.sleep();
+    }
+    ROS_WARN("Task%d Finished", task -> getTaskId());
+    stay(task -> getStayPoint(), stay_time);
+}
+
 
 int main(int argc, char **argv) {
     ros::init(argc, argv, "scheduler");
@@ -150,6 +173,7 @@ int main(int argc, char **argv) {
 
     take_off_task00 = new TakeOffTask(0);
     route_task01 = new RouteTask(1);
+    land_task02 = new LandTask(2);
 
 
     pose_mode_pub = nh.advertise<scheduler::pose_mode>("/t265/pos", 1);
@@ -159,46 +183,21 @@ int main(int argc, char **argv) {
     //velocity_mode_pub = nh.advertise<scheduler::velocity_mode>("/t265/velocity", 1);
 
     setParams();
-    Eigen::Vector3d position(0, 0, 0);
-    Eigen::Quaterniond qtn_orientation(0, 0, 0, 0);
-    drone.setPosition(position);
-    drone.setQtnOrientation(qtn_orientation);
-    Eigen::Vector3d linear_velocity(0, 0, 0);
-    Eigen::Vector3d angular_velocity(0, 0, 0);
-    drone.setVelocity(linear_velocity);
-    drone.setAngularVelocity(angular_velocity);
+
     ros::Subscriber t265_sub = nh.subscribe("/camera/odom/sample", 10, t265Callback);
     ros::Rate loop_rate(200);
     ros::Rate control_rate(200);
     while (ros::ok()) {
-        drone.setHeight(0.73);
-//        sendTaskId(0);
-//        while (!take_off_task00->isTakeOffFinished()){
-//            sendTaskId(take_off_task00 -> getTaskId());
-//            target_pose = take_off_task00 -> runTask();
+        sendTaskId(0);
+        runTask(2, take_off_task00);
+        runTask(2, route_task01);
+        runTask(0, land_task02);
+
+//        while (!point_task_img->isPointOver()){
+//            point_task_img->error_fix = point_task_img->ImageTask(img_target);
 //            sendPosition(pose);
-//            ROS_INFO("taking off to %f m", take_off_task00 -> getTakeOffHeight());
-//            ros::spinOnce();
-//            control_rate.sleep();
 //        }
-//        ROS_WARN("TakeOffTask00 Finished");
-//        stay(stay_point00, 2);
-//        ROS_WARN("RouteTask01 Start");
-//        while (!route_task01->isRouteFinished()){
-//            sendTaskId(route_task01 -> getTaskId());
-//            target_pose = route_task01 -> runTask();
-//            sendPosition(pose);
-//            ROS_INFO("approaching to point NO_%d", route_task01 -> getCurrentRouteIndex());
-//            ros::spinOnce();
-//            control_rate.sleep();
-//        }
-//        ROS_WARN("RouteTask01 Finished");
-//        stay(stay_point01, 20);
-        while (!point_task_img->isPointOver()){
-            point_task_img->error_fix = point_task_img->ImageTask(img_target);
-            sendPosition(pose);
-        }
-        ROS_WARN("Image error fix Finished");
+//        ROS_WARN("Image error fix Finished");
         ros::spinOnce();
         loop_rate.sleep();
     }

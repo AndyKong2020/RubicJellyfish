@@ -6,16 +6,19 @@
 #include <vector>
 #include <Eigen/Core>
 #include "ros/ros.h"
+#include <scheduler/Task.h>
+#include <scheduler/Drone.h>
 
 class TaskManager
 {
 public:
     TaskManager();
-    void nextTask();
-    int getCurrentTask() const;
+    int nextTask();
+    int getCurrentTaskId() const;
     void reset();
 private:
     int task_index;
+    std::vector<Task*> task_list;
 
 };
 #endif //SRC_TASKMANAGER_H

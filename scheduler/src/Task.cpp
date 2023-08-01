@@ -11,6 +11,10 @@ int Task::getTaskId() const {
     return task_id;
 }
 
+void Task::printLog() const {
+    ROS_INFO("Task %d is running", task_id);
+}
+
 
 void RouteTask::addToRouteList(const DronePose & route_point)
 {
@@ -86,6 +90,10 @@ int RouteTask::getRouteListSize() const
     return (int)route_list.size();
 }
 
+void RouteTask::printLog() const {
+    ROS_INFO("RouteTask %d: , approaching to point NO_%d, x:%f, y:%f", task_id, route_index, route_list[route_index].position.x(), route_list[route_index].position.y());
+}
+
 DronePose RouteTask::runTask() {
     while(route_index < route_list.size())
     {
@@ -106,7 +114,7 @@ RouteTask::RouteTask(const int &task_id) : Task(task_id) {
     route_index = 0;
 }
 
-bool RouteTask::isRouteFinished() const {
+bool RouteTask::isTaskFinished() const {
     if (route_index == route_list.size())
     {
         return true;
@@ -117,9 +125,14 @@ bool RouteTask::isRouteFinished() const {
     }
 }
 
+DronePose RouteTask::getStayPoint() {
+    return route_list[route_list.size() - 1];
+}
+
 
 PointTask::PointTask(const int &task_id) : Task(task_id) {
-
+    image_error.x = 0;
+    image_error.y = 0;
 }
 
 cv::Point2f  PointTask::ImageTask(const imageTarget& img_target) {
@@ -166,6 +179,10 @@ void TakeOffTask::setTakeOffHeight(const double &height) {
     take_off_point_in_air.position.z() += height;
 }
 
+void TakeOffTask::printLog() const {
+    ROS_INFO("TakeOffTask %d: , take off height: %f", task_id, take_off_height);
+}
+
 inline bool height_match(const DronePose & a, const DronePose & b)
 {
     return abs(a.position.z() - b.position.z()) < 0.02;
@@ -183,7 +200,7 @@ DronePose TakeOffTask::runTask() {
     }
 }
 
-bool TakeOffTask::isTakeOffFinished() const {
+bool TakeOffTask::isTaskFinished() const {
     if (height_match(drone.getPose(), take_off_point_in_air))
     {
         return true;
@@ -199,4 +216,47 @@ double TakeOffTask::getTakeOffHeight() const {
     return take_off_height;
 }
 
+DronePose TakeOffTask::getStayPoint() {
+    return take_off_point_in_air;
+}
 
+
+LandTask::LandTask(const int &task_id) : Task(task_id) {
+
+}
+
+bool LandTask::isTaskFinished() const{
+    if (drone.getPose().position.z() < -0.2)
+    {
+        return true;
+    }
+    else
+    {
+        return false;
+    }
+}
+
+DronePose LandTask::runTask() {
+    if (drone.getPose().position.z() < -0.2)
+    {
+        ROS_WARN("LandTask %d: Arrived at land point", task_id);
+        return land_point;
+    }
+    else
+    {
+        return land_point;
+    }
+}
+
+void LandTask::setLandPoint(const DronePose &_land_point) {
+    land_point = _land_point;
+
+}
+
+void LandTask::printLog() const {
+    ROS_INFO("LandTask %d: , land point: x:%f, y:%f, height:%f", task_id, land_point.position.x(), land_point.position.y(), land_point.position.z());
+}
+
+DronePose LandTask::getStayPoint() {
+    return land_point;
+}

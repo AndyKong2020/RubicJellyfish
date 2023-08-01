@@ -16,6 +16,9 @@ class Task
 public:
     explicit Task(const int & task_id);
     int getTaskId() const;
+    virtual bool isTaskFinished() const = 0;
+    virtual void printLog() const;
+    virtual DronePose getStayPoint() = 0;
     virtual DronePose runTask() = 0;
 protected:
     int task_id;
@@ -31,7 +34,9 @@ public:
     int getCurrentRouteIndex() const;
     DronePose getCurrentRoutePoint() const;
     int getRouteListSize() const;
-    bool isRouteFinished() const;
+    void printLog() const override;
+    bool isTaskFinished() const override;
+    DronePose getStayPoint() override;
     DronePose runTask() override;
 
 private:
@@ -61,12 +66,28 @@ public:
     explicit TakeOffTask(const int & task_id);
     void setTakeOffPoint(const DronePose & take_off_point);
     void setTakeOffHeight(const double & height);
-    bool isTakeOffFinished() const;
+    bool isTaskFinished() const override;
     double getTakeOffHeight() const;
+    void printLog() const override;
+    DronePose getStayPoint() override;
     DronePose runTask() override;
 private:
     DronePose take_off_point_on_land;
     double take_off_height;
     DronePose take_off_point_in_air;
+
+};
+
+class LandTask : public Task
+{
+public:
+    explicit LandTask(const int & task_id);
+    bool isTaskFinished() const override;
+    void setLandPoint(const DronePose & land_point);
+    void printLog() const override;
+    DronePose getStayPoint() override;
+    DronePose runTask() override;
+private:
+    DronePose land_point;
 };
 #endif //SRC_TASK_H
