@@ -114,8 +114,8 @@ void Depth_cb(const sensor_msgs::ImageConstPtr &msg) {
 int main(int argc, char **argv) {
     ros::init(argc, argv, "recognize");
     ros::NodeHandle n;
-    ros::Subscriber resultsSub = n.subscribe("/camera/color/image_raw", 20, &Image_cb);
-    ros::Subscriber DepthSub = n.subscribe("/camera/aligned_depth_to_color/image_raw", 20, &Depth_cb);
+    ros::Subscriber resultsSub = n.subscribe("/d435/color/image_raw", 20, &Image_cb);
+    ros::Subscriber DepthSub = n.subscribe("/d435/aligned_depth_to_color/image_raw", 20, &Depth_cb);
     image_pub = n.advertise<recognize::image>("/image/write", 20);
 
     final_model = yolo_init("/home/robin/yolov5/runs/train/exp2/weights/best.xml");

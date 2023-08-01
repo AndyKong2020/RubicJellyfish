@@ -211,7 +211,7 @@ int main(int argc, char **argv) {
 
     setParams();
 
-    ros::Subscriber t265_sub = nh.subscribe("/camera/odom/sample", 10, t265Callback);
+    ros::Subscriber t265_sub = nh.subscribe("/t265/odom/sample", 10, t265Callback);
     ros::Rate loop_rate(200);
     ros::Rate control_rate(200);
     while (ros::ok()) {
