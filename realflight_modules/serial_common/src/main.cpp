@@ -63,9 +63,9 @@ void t265poswrite_callback(const scheduler::pose_mode::ConstPtr& msg)
     test.x = pos.self_x;
     test.y = pos.self_y;
     test.z = pos.self_z;
-    test.vx = pos.self_vx;
-    test.vy = pos.self_vy;
-    test.vz = pos.self_vz;
+    test.vx = pos.target_x;
+    test.vy = pos.target_y;
+    test.vz = pos.target_z;
     plot_z.publish(test);
     cal_sum(&pos);
     ser.serSend<t265_pos>(pos,pos.length);
