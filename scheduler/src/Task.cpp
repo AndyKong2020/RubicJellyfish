@@ -132,7 +132,8 @@ cv::Point2f  PointTask::ImageTask(const imageTarget& img_target) {
     image_error.y = image_error.y / s;
     return image_error;
 }
-bool PointTask::isPointOver() const {
+bool PointTask::isPointOver(const imageTarget& img_target)  {
+    PointTask::ImageTask(img_target);
     DronePose drone_target;
     drone_target.position.x()=drone_target.position.x()+image_error.x;
     drone_target.position.y()=drone_target.position.y()+image_error.y;

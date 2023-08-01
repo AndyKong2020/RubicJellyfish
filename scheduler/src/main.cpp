@@ -150,6 +150,7 @@ int main(int argc, char **argv) {
 
     take_off_task00 = new TakeOffTask(0);
     route_task01 = new RouteTask(1);
+    point_task_img = new PointTask(2);
 
 
     pose_mode_pub = nh.advertise<scheduler::pose_mode>("/t265/pos", 1);
@@ -159,15 +160,7 @@ int main(int argc, char **argv) {
     //velocity_mode_pub = nh.advertise<scheduler::velocity_mode>("/t265/velocity", 1);
 
     setParams();
-    Eigen::Vector3d position(0, 0, 0);
-    Eigen::Quaterniond qtn_orientation(0, 0, 0, 0);
-    drone.setPosition(position);
-    drone.setQtnOrientation(qtn_orientation);
-    Eigen::Vector3d linear_velocity(0, 0, 0);
-    Eigen::Vector3d angular_velocity(0, 0, 0);
-    drone.setVelocity(linear_velocity);
-    drone.setAngularVelocity(angular_velocity);
-    ros::Subscriber t265_sub = nh.subscribe("/camera/odom/sample", 10, t265Callback);
+
     ros::Rate loop_rate(200);
     ros::Rate control_rate(200);
     while (ros::ok()) {
@@ -194,9 +187,13 @@ int main(int argc, char **argv) {
 //        }
 //        ROS_WARN("RouteTask01 Finished");
 //        stay(stay_point01, 20);
-        while (!point_task_img->isPointOver()){
+        //point_task_img->error_fix = point_task_img->ImageTask(img_target);
+        stay(stay_point02,10);
+        while (!point_task_img->isPointOver(img_target)){
             point_task_img->error_fix = point_task_img->ImageTask(img_target);
             sendPosition(pose);
+            ros::spinOnce();
+            control_rate.sleep();
         }
         ROS_WARN("Image error fix Finished");
         ros::spinOnce();
