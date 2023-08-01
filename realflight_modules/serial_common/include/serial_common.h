@@ -141,10 +141,13 @@ inline void cal_sum(t265_pos * data){
 }
 inline void cal_sum(gimbal_info * data){
     char *p = (char *)data;
+    uint8_t sum = 0,add = 0;
     for(int i = 0; i < data->length-2; i++){
-        data->sumcheck += p[i];
-        data->addcheck += data->sumcheck;
+        sum += p[i];
+        add += sum;
     }
+    data->sumcheck = sum;
+    data->addcheck = add;
 }
 
 #endif
