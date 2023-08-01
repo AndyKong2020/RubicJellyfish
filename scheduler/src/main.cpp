@@ -126,13 +126,13 @@ void imuCallback(const serial_common::gimbalConstPtr &msg) {   //change drone_co
 //    Eigen::Vector3d eulerAngle=quaternion.matrix().eulerAngles(0,1,2);
 //    drone_control.roll = eulerAngle.x();
 //    drone_control.pitch = eulerAngle.y();
-
     drone.setHeight(msg->z);
 }
 void imgCallback(const recognize::imageConstPtr &msg) {   //change drone_control imu to camera imu
     drone_img.setDepth(msg->x,msg->y,msg->depth);
     img_target.img = drone_img.getPoint();
     img_target.plane_depth = drone_img.getDis();
+    std::cout<<"plane_dis:"<< img_target.plane_depth<<std::endl;
 }
 
 void stay(const DronePose & _pose, const double & time){
@@ -174,6 +174,7 @@ int main(int argc, char **argv) {
     take_off_task00 = new TakeOffTask(0);
     route_task01 = new RouteTask(1);
     land_task02 = new LandTask(2);
+    point_task_img = new PointTask(3);
 
 
     pose_mode_pub = nh.advertise<scheduler::pose_mode>("/t265/pos", 1);
@@ -193,11 +194,13 @@ int main(int argc, char **argv) {
         runTask(2, route_task01);
         runTask(0, land_task02);
 
-//        while (!point_task_img->isPointOver()){
-//            point_task_img->error_fix = point_task_img->ImageTask(img_target);
-//            sendPosition(pose);
-//        }
-//        ROS_WARN("Image error fix Finished");
+        while (!point_task_img->isPointOver(img_target)){
+            point_task_img->error_fix = point_task_img->ImageTask(img_target);
+            sendPosition(pose);
+            ros::spinOnce();
+            control_rate.sleep();
+        }
+        ROS_WARN("Image error fix Finished");
         ros::spinOnce();
         loop_rate.sleep();
     }

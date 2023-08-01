@@ -125,10 +125,10 @@ int image_processing::tool_tohsv(const Mat& Img){
     }
     return 0;
 }
-vector<Point2f> find_centre(const Mat& srcImg,const Mat& midImg){
+vector<RotatedRect> find_centre(const Mat& srcImg,const Mat& midImg){
     Mat dstImg = srcImg.clone();
     vector<vector<Point>> contours;
-    vector<Point2f> target;
+    vector<RotatedRect> target;
     findContours(midImg, contours, RETR_CCOMP, CHAIN_APPROX_SIMPLE);
     Mat midImg1 = Mat::zeros(midImg.rows, midImg.cols, CV_8UC3);
     for (int i = 0; i < contours.size(); i++)
@@ -136,8 +136,8 @@ vector<Point2f> find_centre(const Mat& srcImg,const Mat& midImg){
         Scalar color(255, 255, 255);
         drawContours(midImg1, contours, i, color, 2);
     }
-    namedWindow("【轮廓图】", WINDOW_NORMAL);
-    imshow("【轮廓图】", midImg1);
+//    namedWindow("【轮廓图】", WINDOW_NORMAL);
+//    imshow("【轮廓图】", midImg1);
 
     const int area_min = 500;
     for (int i = 0; i < contours.size(); i++)
@@ -153,18 +153,19 @@ vector<Point2f> find_centre(const Mat& srcImg,const Mat& midImg){
         Point2f vertex[4];
         //将box 中存储的4 个顶点的坐标 存储到vertex[0]~vertex[3]中去
         box.points(vertex);
-        target.push_back(box.center);
-        cout<< "size::::"<<box.size<<endl;
-        //打印中心点位置及外接矩形角度
-        cout << "中心点位置（第" << i << "条轮廓）：" << box.center << endl;
-        cout << "外接矩形角度（第" << i << "条轮廓）：" << box.angle << endl;
-
-        //绘制出最小面积的包围矩形
-        line(dstImg, vertex[0], vertex[1], Scalar(200, 255, 200), 3, LINE_AA);
-        line(dstImg, vertex[1], vertex[2], Scalar(200, 255, 200), 3, LINE_AA);
-        line(dstImg, vertex[2], vertex[3], Scalar(200, 255, 200), 3, LINE_AA);
-        line(dstImg, vertex[3], vertex[0], Scalar(200, 255, 200), 3, LINE_AA);
-
+        target.push_back(box);
+//        cout<< "size::::"<<box.size<<endl;
+//        //打印中心点位置及外接矩形角度
+//        cout << "中心点位置（第" << i << "条轮廓）：" << box.center << endl;
+//        cout << "外接矩形角度（第" << i << "条轮廓）：" << box.angle << endl;
+        if(box.boundingRect().area()>6000) {
+            //绘制出最小面积的包围矩形
+            line(dstImg, vertex[0], vertex[1], Scalar(200, 255, 200), 3, LINE_AA);
+            line(dstImg, vertex[1], vertex[2], Scalar(200, 255, 200), 3, LINE_AA);
+            line(dstImg, vertex[2], vertex[3], Scalar(200, 255, 200), 3, LINE_AA);
+            line(dstImg, vertex[3], vertex[0], Scalar(200, 255, 200), 3, LINE_AA);
+        }
+        //cout<<"area::::::"<<box.boundingRect().size()<<endl;
         //绘制中心的光标，为了容易理解，此处为手动计算中心点，也可以直接使用 box.center
         Point2f center, l, r, u, d;
         center.x = (vertex[0].x + vertex[2].x) / 2.0f;
@@ -177,36 +178,37 @@ vector<Point2f> find_centre(const Mat& srcImg,const Mat& midImg){
         u.y = center.y - 10;
         d.x = center.x;
         d.y = center.y + 10;
-        line(dstImg, l, r, Scalar(200, 255, 200), 2, LINE_AA);
-        line(dstImg, u, d, Scalar(200, 255, 200), 2, LINE_AA);
+//        line(dstImg, l, r, Scalar(200, 255, 200), 2, LINE_AA);
+//        line(dstImg, u, d, Scalar(200, 255, 200), 2, LINE_AA);
     }
     namedWindow("【最小包围矩形及获取中心点】", WINDOW_NORMAL);
     imshow("【最小包围矩形及获取中心点】", dstImg);
     return target;
 }
 // the function of detect something
-int image_processing::image_threshold(const Mat& srcImg){
+RotatedRect image_processing::image_threshold(const Mat& srcImg){
     //	srcImg原图
     Mat midImg,frame_threshold,dilation_dst;
     Mat dstImg = srcImg.clone();
-
+    vector<RotatedRect> img_target;
+    RotatedRect final_box;
     // Convert from BGR to HSV colorspace
     cvtColor(srcImg, midImg, COLOR_BGR2HSV);
     // Detect the object based on HSV Range Values
-    inRange(midImg, Scalar(0, 57, 254), Scalar(180, 255, 255), frame_threshold);
+    inRange(midImg, Scalar(0, 71, 45), Scalar(13, 255, 255), frame_threshold);
     //	灰度化
     //cvtColor(frame_threshold, midImg,COLOR_BGR2GRAY);     //灰度图
     //	中值滤波
     medianBlur(frame_threshold, midImg, 9);               //滤波后
-    namedWindow("【滤波图】", WINDOW_NORMAL);
-    imshow("【滤波图】", midImg);
+//    namedWindow("【滤波图】", WINDOW_NORMAL);
+//    imshow("【滤波图】", midImg);
     //	二值化
     //adaptiveThreshold(midImg, midImg, 255, ADAPTIVE_THRESH_GAUSSIAN_C, THRESH_BINARY, 11, 1); // 动态阈值二值化
     //threshold(midImg, midImg, 190, 255, 0);
 
     //实际的项目之中可以通过中值滤波,消除椒盐噪声,在用一次腐蚀去除掉相应的干扰,最后,加上膨胀将轮廓进行一个放大的过程.
 
-    int element_size =2;
+    int element_size =5;
     int s = element_size * 2 + 1;
     Mat structureElement = getStructuringElement(MORPH_RECT,
                                                  Size(s, s), Point(-1, -1));
@@ -226,7 +228,23 @@ int image_processing::image_threshold(const Mat& srcImg){
 //    morphologyEx(midImg, midImg, MORPH_CLOSE, element_size,Point(-1, -1), 2);
 //    namedWindow("【闭运算后】", WINDOW_NORMAL);
 //    imshow("【闭运算后】", midImg);
-    find_centre(srcImg,midImg);
+
+    img_target = find_centre(srcImg,midImg);
+    if(img_target.size() == 1){
+        final_box = img_target[0];
+    }else if(img_target.size()>1 && img_target.size() != 0){
+        int max_i = 0,max_area = 0;
+        for(int i =0;i<img_target.size();i++){
+            if(img_target[i].boundingRect().area()>max_area){
+                max_area = img_target[i].boundingRect().area();
+                max_i = i;
+            }
+        }
+        if(img_target[max_i].boundingRect().area() != 0){
+            final_box = img_target[max_i];
+        }
+    }
+    return final_box;
 }
 
 

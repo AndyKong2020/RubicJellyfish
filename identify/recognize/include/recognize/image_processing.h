@@ -54,7 +54,7 @@ public :
     Point2f target;
     Point point;
     map<int, int> HP;
-    int image_threshold(const Mat& srcImg);
+    RotatedRect image_threshold(const Mat& srcImg);
     void decode(Mat &im, vector<decodedObject>&decodedObjects);
     int tool_tohsv(const Mat& Img);
 

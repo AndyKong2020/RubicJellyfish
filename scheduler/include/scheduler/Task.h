@@ -51,7 +51,7 @@ public:
     explicit PointTask(const int & task_id);
     cv::Point2f ImageTask(const imageTarget& img_target);
     DronePose runTask() override;
-    bool isPointOver() const;
+    bool isPointOver(const imageTarget& img_target) ;
     cv::Point2f image_error;
     cv::Point2f error_fix;
 private:

@@ -136,8 +136,8 @@ PointTask::PointTask(const int &task_id) : Task(task_id) {
 }
 
 cv::Point2f  PointTask::ImageTask(const imageTarget& img_target) {
-    const int width = 1280;
-    const int height = 720;
+    const int width = 640;
+    const int height = 480;
     image_error.x = height/2 - img_target.img.y;
     image_error.y = width/2 - img_target.img.x;
     float s = sqrtf(image_error.x*image_error.x+image_error.y*image_error.y);
@@ -145,7 +145,8 @@ cv::Point2f  PointTask::ImageTask(const imageTarget& img_target) {
     image_error.y = image_error.y / s;
     return image_error;
 }
-bool PointTask::isPointOver() const {
+bool PointTask::isPointOver(const imageTarget& img_target)  {
+    PointTask::ImageTask(img_target);
     DronePose drone_target;
     drone_target.position.x()=drone_target.position.x()+image_error.x;
     drone_target.position.y()=drone_target.position.y()+image_error.y;

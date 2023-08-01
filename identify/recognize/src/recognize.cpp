@@ -32,10 +32,12 @@ image_processing _img;
 Mat test1 = imread("/home/robin/1.jpg");
 Mat test2 = imread("/home/nuaa/wolf_big.jpg");
 ov::CompiledModel final_model;
-
+float d_value = 0;
+cv::Rect img_res;
+float d_res;
 void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
     recognize::image _image;
-    cv::Rect final_box;
+    RotatedRect final_box;
     ros::Time start = ros::Time::now();
     try
     {
@@ -58,7 +60,7 @@ void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
 
 */
 
-    _img.image_threshold(img_show);
+    final_box = _img.image_threshold(img_show);
     //_img.tool_tohsv(img_show);
 
 
@@ -78,32 +80,43 @@ void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
         final_box = yolov5_res[0].box;
     }
 */
-
-    std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
-    depth_img.target.x = 1;
-    depth_img.target.y = 1;
+    std::cout << "xxx: " << final_box.center.x << std::endl;
+    std::cout << "yyy: " << final_box.center.y << std::endl;
+    //std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
+    if(final_box.center.x != 0 && final_box.center.y != 0 && final_box.boundingRect().area() >= 2000) {
+        img_res.x = final_box.center.x;
+        img_res.y = final_box.center.y;
+        d_res = d_value;
+    }
     _image.mode = 1;
     _image.type = 1;
-    _image.x = final_box.x;
-    _image.y = final_box.y;
-    image_pub.publish(_image);
+    _image.x = img_res.x;
+    _image.y = img_res.y;
+    _image.depth = d_res;
+    depth_img.target.x = img_res.x;
+    depth_img.target.y = img_res.y;
+    cout<< "Value of depth_pic's pixel= "<<_image.depth<<endl;
+
+    if(_image.x !=0 && _image.y != 0 && _image.depth != 0)
+        image_pub.publish(_image);
+    std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
 }
 
 void Depth_cb(const sensor_msgs::ImageConstPtr &msg) {
     cv_bridge::CvImagePtr Dest ;
     Dest = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::TYPE_16UC1);
     cv::Mat depth_pic = Dest->image;
-    float d = depth_pic.at<float>(depth_img.target);           //读取深度值，数据类型为ushort单位为ｍｍ
-    float d_value = d/10 ;      //强制转换
-    cout<< "Value of depth_pic's pixel= "<<d_value<<endl;    //读取深度值
+    ushort d = depth_pic.at<ushort>(depth_img.target);           //读取深度值，数据类型为ushort单位为ｍｍ
+    d_value = float(d)/10 ;      //强制转换
+    //cout<< "Value of depth_pic's pixel= "<<d_value<<endl;
 
 }
 int main(int argc, char **argv) {
     ros::init(argc, argv, "recognize");
     ros::NodeHandle n;
-    ros::Subscriber resultsSub = n.subscribe("/camera/color/image_raw", 10, &Image_cb);
-    ros::Subscriber DepthSub = n.subscribe("/camera/aligned_depth_to_color/image_raw", 10, &Depth_cb);
-    image_pub = n.advertise<recognize::image>("/image/write", 10);
+    ros::Subscriber resultsSub = n.subscribe("/camera/color/image_raw", 20, &Image_cb);
+    ros::Subscriber DepthSub = n.subscribe("/camera/aligned_depth_to_color/image_raw", 20, &Depth_cb);
+    image_pub = n.advertise<recognize::image>("/image/write", 20);
 
     final_model = yolo_init("/home/robin/yolov5/runs/train/exp2/weights/best.xml");
     ros::Time start = ros::Time::now();
