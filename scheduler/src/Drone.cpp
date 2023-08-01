@@ -44,22 +44,6 @@ void Drone::setHeight(const double & _height)
      height = _height;
 }
 
-void Drone_img::setDepth(const uint8_t _img_x,const uint8_t _img_y,const float _depth)
-{
-    img.x = _img_x;
-    img.y = _img_y;
-    depth = _depth;
-    plane_depth = sqrtf(depth*depth + drone.getHeight() * drone.getHeight());
-}
-float Drone_img::getDis() const
-{
-    float plane_depth = sqrtf(depth*depth + drone.getHeight() * drone.getHeight());
-    return plane_depth;
-}
-cv::Point Drone_img::getPoint() const
-{
-    return img;
-}
 Eigen::Vector3d Drone::getPosition() const
 {
     return position;
@@ -85,7 +69,7 @@ Eigen::Vector3d Drone::getAngularVelocity() const
     return angular_velocity;
 }
 
-float Drone::getHeight() const
+double Drone::getHeight() const
 {
     return height;
 }
@@ -135,11 +119,16 @@ DroneTwist Drone::getTwist() const {
 //    img.img_x = img_x;
 //    img.img_y = img_y;
 //    img.depth = depth;
-//    img.plane_depth = plane_depth;
+//    img.tgt_plane_distance = tgt_plane_distance;
 //    return img;
 //}
 
 void Drone::setAccumulativeError(const Eigen::Vector3d &_convinced_position) {
-    position_accumulative_error = _convinced_position - position;
+    position_accumulative_error[0] = _convinced_position[0] - position[0];
+    position_accumulative_error[1] = _convinced_position[1] - position[1];
+}
+
+Eigen::Vector3d Drone::getAccumulativeError() const {
+    return position_accumulative_error;
 }
 

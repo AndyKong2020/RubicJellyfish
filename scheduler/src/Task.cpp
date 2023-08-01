@@ -130,27 +130,37 @@ DronePose RouteTask::getStayPoint() {
 }
 
 
-PointTask::PointTask(const int &task_id) : Task(task_id) {
-    image_error.x = 0;
-    image_error.y = 0;
+PointTask::PointTask(const int & task_id) : Task(task_id) {
+    image_error = cv::Point2i(0, 0);
+    tgt_plane_distance = 0;
 }
 
-cv::Point2f  PointTask::ImageTask(const imageTarget& img_target) {
-    const int width = 640;
-    const int height = 480;
-    image_error.x = height/2 - img_target.img.y;
-    image_error.y = width/2 - img_target.img.x;
-    float s = sqrtf(image_error.x*image_error.x+image_error.y*image_error.y);
-    image_error.x = image_error.x / s;
-    image_error.y = image_error.y / s;
-    return image_error;
+
+DronePose PointTask::runTask() {
+    tgt_plane_distance = sqrt(img_target.depth * img_target.depth - drone.getHeight() * drone.getHeight());
+    image_error.x = (double)frame_size.y/2 - (double)img_target.target_point.y;
+    image_error.y = (double)frame_size.x/2 - (double)img_target.target_point.x;
+    double proportion = tgt_plane_distance / sqrt(pow(image_error.x, 2) + pow(image_error.y, 2));
+    tgt_error.x = image_error.x * proportion;
+    tgt_error.y = image_error.y * proportion;
+    tgt_pose.position.x() = drone.getPose().position.x() + image_error.x;
+    tgt_pose.position.y() = drone.getPose().position.x() + image_error.y;
+    return tgt_pose;
 }
-bool PointTask::isPointOver(const imageTarget& img_target)  {
-    PointTask::ImageTask(img_target);
-    DronePose drone_target;
-    drone_target.position.x()=drone_target.position.x()+image_error.x;
-    drone_target.position.y()=drone_target.position.y()+image_error.y;
-    if (position_match(drone.getPose(),drone_target))
+
+void PointTask::printLog() const {
+    ROS_INFO("approaching to point, x:%f, y:%f", tgt_pose.position.x(), tgt_pose.position.y());
+}
+
+
+
+bool PointTask::isTaskFinished() const {
+    if (image_error.x == 0 && image_error.y == 0)
+    {
+        ROS_WARN("PointTask Not Init Yet");
+        return false;
+    }
+    if (position_match(drone.getPose(),tgt_pose))
     {
         return true;
     }
@@ -159,8 +169,32 @@ bool PointTask::isPointOver(const imageTarget& img_target)  {
         return false;
     }
 }
-DronePose PointTask::runTask() {
+
+void PointTask::setFrameSize(const cv::Point2i &_frame_size) {
+    frame_size = _frame_size;
+
 }
+
+void PointTask::getMessage(const ImageTarget &_img_target) {
+    img_target = _img_target;
+}
+
+DronePose PointTask::getStayPoint() {
+    setAccumulativeError();
+    return tgt_pose;
+}
+
+void PointTask::setTrueValue(const Eigen::Vector3d &_true_value) {
+    true_value = _true_value;
+}
+
+void PointTask::setAccumulativeError() {
+    true_value[0] += tgt_error.x;
+    true_value[1] += tgt_error.y;
+    drone.setAccumulativeError(true_value);
+    ROS_WARN("accumulative error x:%f, y:%f", drone.getAccumulativeError().x(), drone.getAccumulativeError().y());
+}
+
 
 TakeOffTask::TakeOffTask(const int &task_id) : Task(task_id) {
     take_off_point_on_land.position = Eigen::Vector3d::Zero();

@@ -26,23 +26,6 @@ typedef struct
     Eigen::Vector3d angular_velocity;
 } DroneTwist;
 
-typedef struct
-{
-    cv::Point img;
-    float depth;
-    float plane_depth;
-} imageTarget;
-
-class Drone_img{
-    cv::Point img;
-    float depth;
-    float plane_depth;
-public:
-    void setDepth(const uint8_t _img_x,const uint8_t _img_y,const float _depth);
-    float getDis() const;
-    cv::Point getPoint() const;
-    imageTarget img_target;
-};
 class Drone: public boost::serialization::singleton<Drone>
 {
 public:
@@ -60,9 +43,10 @@ public:
     Eigen::Quaterniond getQtnOrientation() const;
     Eigen::Vector3d getAngularOrientation() const;
     Eigen::Vector3d getAngularVelocity() const;
+    Eigen::Vector3d getAccumulativeError() const;
     DronePose getPose() const;
     DroneTwist getTwist() const;
-    float getHeight() const;
+    double getHeight() const;
 private:
     Eigen::Vector3d position_accumulative_error;
     Eigen::Vector3d position;

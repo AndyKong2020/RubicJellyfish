@@ -11,6 +11,12 @@
 #include "angles/angles.h"
 #include "Drone.h"
 
+typedef struct
+{
+    cv::Point2i target_point;
+    float depth;
+}ImageTarget;
+
 class Task
 {
 public:
@@ -49,15 +55,23 @@ class PointTask : public Task
 {
 public:
     explicit PointTask(const int & task_id);
-    cv::Point2f ImageTask(const imageTarget& img_target);
+    void setFrameSize(const cv::Point2i & frame_size);
+    void setTrueValue(const Eigen::Vector3d & _true_value);
+    void getMessage(const ImageTarget& img_target);
+    void setAccumulativeError();
+    void printLog() const override;
     DronePose runTask() override;
-    bool isPointOver(const imageTarget& img_target) ;
-    cv::Point2f image_error;
-    cv::Point2f error_fix;
+    DronePose getStayPoint() override;
+    bool isTaskFinished() const override;
 private:
     Eigen::Vector3d accumulative_error;
-    DronePose point;
-
+    double tgt_plane_distance;
+    cv::Point2d image_error;
+    cv::Point2d tgt_error;
+    cv::Point2i frame_size;
+    Eigen::Vector3d true_value;
+    DronePose tgt_pose;
+    ImageTarget img_target;
 };
 
 class TakeOffTask : public Task
