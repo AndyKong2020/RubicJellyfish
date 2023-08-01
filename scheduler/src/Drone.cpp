@@ -41,7 +41,7 @@ void Drone::setAngularVelocity(const Eigen::Vector3d & _angular_velocity)
 
 void Drone::setHeight(const double & _height)
 {
-     height = _height;
+     height = _height / 100;
 }
 
 Eigen::Vector3d Drone::getPosition() const
