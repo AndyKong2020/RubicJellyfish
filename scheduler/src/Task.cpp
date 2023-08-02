@@ -131,7 +131,7 @@ DronePose RouteTask::getStayPoint() {
 
 
 PointTask::PointTask(const int & task_id) : Task(task_id) {
-    tgt_error = cv::Point2i(0, 0);
+    tgt_error = cv::Point2d(0, 0);
     tgt_plane_distance = 0;
 }
 
