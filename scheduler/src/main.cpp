@@ -188,10 +188,11 @@ void runTask(const double & stay_time, PointTask * task, const ImageTarget & _im
         sendTaskId(task -> getTaskId());
         task -> getMessage(_image_target);
         target_pose = task -> runTask();
-        geometry_msgs::Point point;
-        point.x = target_pose.position.x();
-        point.y = target_pose.position.y();
-        point.z = target_pose.position.z();
+        geometry_msgs::PoseStamped point;
+        point.header.frame_id = "map";
+        point.pose.position.x = target_pose.position.x();
+        point.pose.position.y = target_pose.position.y();
+        point.pose.position.z = target_pose.position.z();
         target_pub.publish(point);
         sendPosition(pose);
         task -> printLog();
@@ -219,7 +220,7 @@ int main(int argc, char **argv) {
 
     pose_mode_pub = nh.advertise<scheduler::pose_mode>("/t265/pos", 1);
     task_id_pub = nh.advertise<std_msgs::UInt8>("/task_id", 1);
-    target_pub = nh.advertise<geometry_msgs::Point>("/target", 10);
+    target_pub = nh.advertise<geometry_msgs::PoseStamped>("/target", 10);
     ros::Subscriber imu = nh.subscribe("/imu_show",10,imuCallback);
     ros::Subscriber img = nh.subscribe("/image/write",10,imgCallback);
     //velocity_mode_pub = nh.advertise<scheduler::velocity_mode>("/t265/velocity", 1);
