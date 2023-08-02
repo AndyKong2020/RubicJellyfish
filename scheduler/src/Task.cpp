@@ -159,25 +159,27 @@ PointTask::PointTask(const int & task_id) : Task(task_id) {
 //    return tgt_pose;
 //}
 
-//DronePose PointTask::runTask() {
-//    Eigen::Vector3d pixel_tgt;
-//    pixel_tgt << img_target.target_point.x, img_target.target_point.y, 1;
-//    Eigen::Vector3d camera_tgt;
-//    camera_tgt << img_target.depth* (inverse_intrinsic_matrix * pixel_tgt);
-//    Eigen::Matrix3d rotation_matrix;
-//    rotation_matrix = Eigen::AngleAxisd(drone.getPose().angular_orientation.z() - M_PI / 2, Eigen::Vector3d::UnitZ())
-//                      * Eigen::AngleAxisd(drone.getPose().angular_orientation.y(), Eigen::Vector3d::UnitY())
-//                      * Eigen::AngleAxisd(drone.getPose().angular_orientation.x() + M_2_PI, Eigen::Vector3d::UnitX());
-//    Eigen::Vector3d translation_vector;
-//    translation_vector << drone.getPose().position.x(), drone.getPose().position.y(), drone.getPose().position.z();
-//    Eigen::Vector3d world_tgt;
-//    world_tgt = rotation_matrix * camera_tgt + translation_vector;
-//    tgt_pose.position.x() = world_tgt.x();
-//    tgt_pose.position.y() = world_tgt.y();
-//    tgt_error.x = tgt_pose.position.x() - drone.getPose().position.x();
-//    tgt_error.y = tgt_pose.position.y() - drone.getPose().position.y();
-//    return tgt_pose;
-//}
+DronePose PointTask::runTask() {
+    Eigen::Vector3d pixel_tgt;
+    pixel_tgt << img_target.target_point.x, img_target.target_point.y, 1;
+    Eigen::Vector3d camera_tgt;
+    camera_tgt << img_target.depth* (inverse_intrinsic_matrix * pixel_tgt);
+    Eigen::Vector3d camera_tgt_2;
+    camera_tgt_2 << -camera_tgt.x(), camera_tgt.y(), camera_tgt.z();
+    Eigen::Matrix3d rotation_matrix;
+    rotation_matrix = Eigen::AngleAxisd(drone.getPose().angular_orientation.z() - M_PI / 2, Eigen::Vector3d::UnitZ())
+                      * Eigen::AngleAxisd(drone.getPose().angular_orientation.y(), Eigen::Vector3d::UnitY())
+                      * Eigen::AngleAxisd(drone.getPose().angular_orientation.x() + M_PI / 2, Eigen::Vector3d::UnitX());
+    Eigen::Vector3d translation_vector;
+    translation_vector << drone.getPose().position.x(), drone.getPose().position.y(), drone.getPose().position.z();
+    Eigen::Vector3d world_tgt;
+    world_tgt = rotation_matrix.reverse() * (camera_tgt - translation_vector);
+    tgt_pose.position.x() = world_tgt.x();
+    tgt_pose.position.y() = world_tgt.y();
+    tgt_error.x = tgt_pose.position.x() - drone.getPose().position.x();
+    tgt_error.y = tgt_pose.position.y() - drone.getPose().position.y();
+    return tgt_pose;
+}
 
 DronePose PointTask::runTask() {
     image_error.x = (double)frame_size.y/2 - (double)img_target.target_point.y;
