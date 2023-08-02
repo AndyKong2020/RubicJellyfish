@@ -163,15 +163,19 @@ DronePose PointTask::runTask() {
     Eigen::Vector3d pixel_tgt;
     pixel_tgt << img_target.target_point.x, img_target.target_point.y, 1;
     Eigen::Vector3d camera_tgt;
-    camera_tgt << img_target.depth* (inverse_intrinsic_matrix * pixel_tgt);
+    camera_tgt << drone.getHeight()*(inverse_intrinsic_matrix * pixel_tgt);
     Eigen::Matrix3d rotation_matrix;
-    rotation_matrix = Eigen::AngleAxisd(drone.getPose().angular_orientation.z() - M_PI / 2, Eigen::Vector3d::UnitZ())
+    rotation_matrix = Eigen::AngleAxisd(angles::normalize_angle(drone.getPose().angular_orientation.z() - M_PI / 2), Eigen::Vector3d::UnitZ())
                       * Eigen::AngleAxisd(drone.getPose().angular_orientation.y(), Eigen::Vector3d::UnitY())
-                      * Eigen::AngleAxisd(drone.getPose().angular_orientation.x() + M_2_PI, Eigen::Vector3d::UnitX());
+                      * Eigen::AngleAxisd(angles::normalize_angle(drone.getPose().angular_orientation.x() + M_PI), Eigen::Vector3d::UnitX());
+//    rotation_matrix = Eigen::AngleAxisd(- M_PI / 2, Eigen::Vector3d::UnitZ())
+//                      * Eigen::AngleAxisd(0, Eigen::Vector3d::UnitY())
+//                      * Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitX());
+
     Eigen::Vector3d translation_vector;
     translation_vector << drone.getPose().position.x(), drone.getPose().position.y(), drone.getPose().position.z();
     Eigen::Vector3d world_tgt;
-    world_tgt = rotation_matrix * camera_tgt + translation_vector;
+    world_tgt = rotation_matrix.inverse() * (camera_tgt - translation_vector);
     tgt_pose.position.x() = world_tgt.x();
     tgt_pose.position.y() = world_tgt.y();
     tgt_error.x = tgt_pose.position.x() - drone.getPose().position.x();

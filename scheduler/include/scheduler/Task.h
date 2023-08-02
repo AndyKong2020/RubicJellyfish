@@ -73,7 +73,7 @@ private:
     Eigen::Vector3d true_value;
     Eigen::Matrix3d intrinsic_matrix;
     Eigen::Matrix3d inverse_intrinsic_matrix;
-    double fx = 385.5, fy = 321.7, cx = 385.5, cy = 237.5;
+    double fx = 607.2, fy = 607.1, cx = 328.0, cy = 239.7;
     DronePose tgt_pose;
     ImageTarget img_target;
 };

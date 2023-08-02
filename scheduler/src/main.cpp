@@ -52,7 +52,7 @@ void sendPosition(scheduler::pose_mode &_pose){
 
     _pose.self_x = drone.getPosition().x();
     _pose.self_y = drone.getPosition().y();
-    _pose.self_z = drone.getPosition().z();
+    _pose.self_z = drone.getHeight();
     _pose.self_roll = drone.getAngularOrientation().x();
     _pose.self_pitch = drone.getAngularOrientation().y();
     _pose.self_yaw = drone.getAngularOrientation().z();
@@ -218,7 +218,7 @@ int main(int argc, char **argv) {
         sendTaskId(0);
         //runTask(2, take_off_task00);
         //runTask(2, route_task01);
-        runTask(20, point_task02, img_target);
+        runTask(1, point_task02, img_target);
         //runTask(0, land_task03);
         ros::spinOnce();
         loop_rate.sleep();
