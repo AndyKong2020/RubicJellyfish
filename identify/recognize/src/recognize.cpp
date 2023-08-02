@@ -107,7 +107,7 @@ void Depth_cb(const sensor_msgs::ImageConstPtr &msg) {
     Dest = cv_bridge::toCvCopy(msg,sensor_msgs::image_encodings::TYPE_16UC1);
     cv::Mat depth_pic = Dest->image;
     ushort d = depth_pic.at<ushort>(depth_img.target);           //读取深度值，数据类型为ushort单位为ｍｍ
-    d_value = float(d)/10 ;      //强制转换
+    d_value = float(d)/1000 ;      //强制转换
     //cout<< "Value of depth_pic's pixel= "<<d_value<<endl;
 
 }
@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
     ros::Subscriber DepthSub = n.subscribe("/d435/aligned_depth_to_color/image_raw", 20, &Depth_cb);
     image_pub = n.advertise<recognize::image>("/image/write", 20);
 
-    final_model = yolo_init("/home/robin/yolov5/runs/train/exp2/weights/best.xml");
+    //final_model = yolo_init("/home/robin/yolov5/runs/train/exp2/weights/best.xml");
     ros::Time start = ros::Time::now();
 
 //the test of match_template
