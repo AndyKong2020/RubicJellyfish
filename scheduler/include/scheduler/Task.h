@@ -69,7 +69,7 @@ private:
     double tgt_plane_distance;
     cv::Point2d image_error;
     cv::Point2d tgt_error;
-    cv::Point2i frame_size;
+    cv::Point2i frame_size = cv::Point2i(640, 480);
     Eigen::Vector3d true_value;
     Eigen::Matrix3d intrinsic_matrix;
     Eigen::Matrix3d inverse_intrinsic_matrix;
