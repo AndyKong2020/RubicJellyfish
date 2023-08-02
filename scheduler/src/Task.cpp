@@ -173,6 +173,8 @@ DronePose PointTask::runTask() {
     world_tgt = rotation_matrix * camera_tgt + translation_vector;
     tgt_pose.position.x() = world_tgt.x();
     tgt_pose.position.y() = world_tgt.y();
+    tgt_error.x = tgt_pose.position.x() - drone.getPose().position.x();
+    tgt_error.y = tgt_pose.position.y() - drone.getPose().position.y();
     return tgt_pose;
 }
 
