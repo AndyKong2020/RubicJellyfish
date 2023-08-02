@@ -71,6 +71,8 @@ private:
     cv::Point2d tgt_error;
     cv::Point2i frame_size;
     Eigen::Vector3d true_value;
+    Eigen::Matrix3d intrinsic_matrix;
+    Eigen::Matrix3d inverse_intrinsic_matrix;
     double fx = 385.5, fy = 321.7, cx = 385.5, cy = 237.5;
     DronePose tgt_pose;
     ImageTarget img_target;

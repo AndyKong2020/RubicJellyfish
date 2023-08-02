@@ -148,13 +148,31 @@ PointTask::PointTask(const int & task_id) : Task(task_id) {
 //    return tgt_pose;
 //}
 
+//DronePose PointTask::runTask() {
+//    double theta_x = atan((img_target.target_point.x - cx)/fx);
+//    double theta_y = atan((img_target.target_point.y - cy)/fy);
+//    tgt_error.x = drone.getPosition().z() * tan(-theta_y - drone.getPose().angular_orientation.x());
+//    tgt_error.y = drone.getPosition().z() * tan(theta_x + drone.getPose().angular_orientation.y());
+//    tgt_pose.position.x() = drone.getPose().position.x() + tgt_error.x;
+//    tgt_pose.position.y() = drone.getPose().position.x() + tgt_error.y;
+//    return tgt_pose;
+//}
+
 DronePose PointTask::runTask() {
-    double theta_x = atan((img_target.target_point.x - cx)/fx);
-    double theta_y = atan((img_target.target_point.y - cy)/fy);
-    tgt_error.x = drone.getPosition().z() * tan(-theta_y - drone.getPose().angular_orientation.x());
-    tgt_error.y = drone.getPosition().z() * tan(theta_x + drone.getPose().angular_orientation.y());
-    tgt_pose.position.x() = drone.getPose().position.x() + tgt_error.x;
-    tgt_pose.position.y() = drone.getPose().position.x() + tgt_error.y;
+    Eigen::Vector3d pixel_tgt;
+    pixel_tgt << img_target.target_point.x, img_target.target_point.y, 1;
+    Eigen::Vector3d camera_tgt;
+    camera_tgt << img_target.depth* (inverse_intrinsic_matrix * pixel_tgt);
+    Eigen::Matrix3d rotation_matrix;
+    rotation_matrix = Eigen::AngleAxisd(drone.getPose().angular_orientation.z() - M_PI / 2, Eigen::Vector3d::UnitZ())
+                      * Eigen::AngleAxisd(drone.getPose().angular_orientation.y(), Eigen::Vector3d::UnitY())
+                      * Eigen::AngleAxisd(drone.getPose().angular_orientation.x() + M_2_PI, Eigen::Vector3d::UnitX());
+    Eigen::Vector3d translation_vector;
+    translation_vector << drone.getPose().position.x(), drone.getPose().position.y(), drone.getPose().position.z();
+    Eigen::Vector3d world_tgt;
+    world_tgt = rotation_matrix * camera_tgt + translation_vector;
+    tgt_pose.position.x() = world_tgt.x();
+    tgt_pose.position.y() = world_tgt.y();
     return tgt_pose;
 }
 
@@ -210,6 +228,8 @@ void PointTask::setIntrinsicMatrix(const double &_fx, const double &_fy, const d
     fy = _fy;
     cx = _cx;
     cy = _cy;
+    intrinsic_matrix << fx, 0, cx, 0, fy, cy, 0, 0, 1;
+    inverse_intrinsic_matrix << intrinsic_matrix.inverse();
 }
 
 
