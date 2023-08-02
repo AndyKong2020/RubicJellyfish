@@ -181,15 +181,15 @@ DronePose PointTask::runTask() {
     return tgt_pose;
 }
 
-DronePose PointTask::runTask() {
-    image_error.x = (double)frame_size.y/2 - (double)img_target.target_point.y;
-    image_error.y = (double)frame_size.x/2 - (double)img_target.target_point.x;
-    tgt_error.x = image_error.x * 0.01;
-    tgt_error.y = image_error.y * 0.01;
-    tgt_pose.position.x() = drone.getPose().position.x() + image_error.x;
-    tgt_pose.position.y() = drone.getPose().position.x() + image_error.y;
-    return tgt_pose;
-}
+//DronePose PointTask::runTask() {
+//    image_error.x = (double)frame_size.y/2 - (double)img_target.target_point.y;
+//    image_error.y = (double)frame_size.x/2 - (double)img_target.target_point.x;
+//    tgt_error.x = image_error.x * 0.01;
+//    tgt_error.y = image_error.y * 0.01;
+//    tgt_pose.position.x() = drone.getPose().position.x() + image_error.x;
+//    tgt_pose.position.y() = drone.getPose().position.x() + image_error.y;
+//    return tgt_pose;
+//}
 
 void PointTask::printLog() const {
     ROS_INFO("approaching to point, x:%f, y:%f", tgt_pose.position.x(), tgt_pose.position.y());
