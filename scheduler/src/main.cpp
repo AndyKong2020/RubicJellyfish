@@ -231,10 +231,10 @@ int main(int argc, char **argv) {
     ros::Rate control_rate(200);
     while (ros::ok()) {
         sendTaskId(0);
-        runTask(2, take_off_task00);
-        runTask(0, route_task01);
-        //runTask(20, point_task02, img_target);
-        runTask(0, land_task03);
+//        runTask(2, take_off_task00);
+//        runTask(0, route_task01);
+        runTask(20, point_task02, img_target);
+        //runTask(0, land_task03);
         ros::spinOnce();
         loop_rate.sleep();
     }

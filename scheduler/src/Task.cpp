@@ -131,7 +131,7 @@ DronePose RouteTask::getStayPoint() {
 
 
 PointTask::PointTask(const int & task_id) : Task(task_id) {
-    image_error = cv::Point2i(0, 0);
+    tgt_error = cv::Point2d(0, 0);
     tgt_plane_distance = 0;
     setIntrinsicMatrix(385.5, 321.7, 385.5, 237.5);
 }
@@ -173,7 +173,7 @@ DronePose PointTask::runTask() {
     Eigen::Vector3d translation_vector;
     translation_vector << drone.getPose().position.x(), drone.getPose().position.y(), drone.getPose().position.z();
     Eigen::Vector3d world_tgt;
-    world_tgt = rotation_matrix.reverse() * (camera_tgt - translation_vector);
+    world_tgt = rotation_matrix.reverse() * (camera_tgt_2 - translation_vector);
     tgt_pose.position.x() = world_tgt.x();
     tgt_pose.position.y() = world_tgt.y();
     tgt_error.x = tgt_pose.position.x() - drone.getPose().position.x();
@@ -198,7 +198,7 @@ void PointTask::printLog() const {
 
 
 bool PointTask::isTaskFinished() const {
-    if (image_error.x == 0 && image_error.y == 0)
+    if (tgt_error.x == 0 && tgt_error.y == 0)
     {
         ROS_WARN("PointTask Not Init Yet");
         return false;
