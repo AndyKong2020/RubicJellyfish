@@ -184,12 +184,13 @@ void runTask(const double & stay_time, Task * task){
 void runTask(const double & stay_time, PointTask * task, const ImageTarget & _image_target){
     ros::Rate control_rate(200);
     ROS_WARN("Task%d Start", task -> getTaskId());
-    while (!task->isTaskFinished()){
+//    while (!task->isTaskFinished()){
+    while (1){
         sendTaskId(task -> getTaskId());
         task -> getMessage(_image_target);
         target_pose = task -> runTask();
         geometry_msgs::PoseStamped point;
-        point.header.frame_id = "map";
+        point.header.frame_id = "t265_odom_frame";
         point.pose.position.x = target_pose.position.x();
         point.pose.position.y = target_pose.position.y();
         point.pose.position.z = target_pose.position.z();
@@ -234,7 +235,7 @@ int main(int argc, char **argv) {
         sendTaskId(0);
 //        runTask(2, take_off_task00);
 //        runTask(0, route_task01);
-        runTask(20, point_task02, img_target);
+        runTask(0, point_task02, img_target);
         //runTask(0, land_task03);
         ros::spinOnce();
         loop_rate.sleep();

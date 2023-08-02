@@ -152,13 +152,24 @@ PointTask::PointTask(const int & task_id) : Task(task_id) {
 //DronePose PointTask::runTask() {
 //    double theta_x = atan((img_target.target_point.x - cx)/fx);
 //    double theta_y = atan((img_target.target_point.y - cy)/fy);
-//    tgt_error.x = drone.getPosition().z() * tan(-theta_y - drone.getPose().angular_orientation.y());
-//    tgt_error.y = drone.getPosition().z() * tan(theta_x + drone.getPose().angular_orientation.x());
+//    tgt_error.x = drone.getPosition().z() * tan(-theta_y + drone.getPose().angular_orientation.y());
+//    tgt_error.y = drone.getPosition().z() * tan(theta_x - drone.getPose().angular_orientation.x());
 //    tgt_pose.position.x() = drone.getPose().position.x() + tgt_error.x;
 //    tgt_pose.position.y() = drone.getPose().position.x() + tgt_error.y;
 //    return tgt_pose;
 //}
 
+DronePose PointTask::runTask() {
+    image_error.x = (double)frame_size.y/2 - (double)img_target.target_point.y;
+    image_error.y = (double)frame_size.x/2 - (double)img_target.target_point.x;
+    double vertical_x = 135 * sqrt(frame_size.x * frame_size.x + frame_size.y * frame_size.y) * drone.getPose().angular_orientation.x() / 2 * tan(fov / 2);
+    double vertical_y = 135 * sqrt(frame_size.x * frame_size.x + frame_size.y * frame_size.y) * drone.getPose().angular_orientation.y() / 2 * tan(fov / 2);
+    tgt_error.x = (image_error.x - vertical_y) * 0.008;
+    tgt_error.y = (image_error.y + vertical_x) * 0.008;
+    tgt_pose.position.x() = drone.getPose().position.x() + tgt_error.x;
+    tgt_pose.position.y() = drone.getPose().position.x() + tgt_error.y;
+    return tgt_pose;
+}
 //DronePose PointTask::runTask() {
 //    Eigen::Vector3d pixel_tgt;
 //    pixel_tgt << img_target.target_point.x, img_target.target_point.y, 1;
@@ -169,11 +180,11 @@ PointTask::PointTask(const int & task_id) : Task(task_id) {
 //    Eigen::Matrix3d rotation_matrix;
 //    rotation_matrix = Eigen::AngleAxisd(-drone.getPose().angular_orientation.z() + M_PI / 2, Eigen::Vector3d::UnitZ())
 //                      * Eigen::AngleAxisd(-drone.getPose().angular_orientation.y(), Eigen::Vector3d::UnitY())
-//                      * Eigen::AngleAxisd(-drone.getPose().angular_orientation.x() - M_PI / 2, Eigen::Vector3d::UnitX());
+//                      * Eigen::AngleAxisd(-drone.getPose().angular_orientation.x() - M_PI, Eigen::Vector3d::UnitX());
 //    Eigen::Vector3d translation_vector;
 //    translation_vector << drone.getPose().position.x(), drone.getPose().position.y(), drone.getPose().position.z();
 //    Eigen::Vector3d world_tgt;
-//    world_tgt = rotation_matrix * camera_tgt_2 + translation_vector;
+//    world_tgt = rotation_matrix * camera_tgt_2 - translation_vector;
 //    tgt_pose.position.x() = world_tgt.x();
 //    tgt_pose.position.y() = world_tgt.y();
 //    tgt_error.x = tgt_pose.position.x() - drone.getPose().position.x();
@@ -181,17 +192,15 @@ PointTask::PointTask(const int & task_id) : Task(task_id) {
 //    return tgt_pose;
 //}
 
-DronePose PointTask::runTask() {
-    image_error.x = (double)frame_size.y/2 - (double)img_target.target_point.y;
-    image_error.y = (double)frame_size.x/2 - (double)img_target.target_point.x;
-    double vertical_x = sqrt(frame_size.x * frame_size.x + frame_size.y * frame_size.y) * drone.getPose().angular_orientation.x() / 2 * tan(fov / 2);
-    double vertical_y = sqrt(frame_size.x * frame_size.x + frame_size.y * frame_size.y) * drone.getPose().angular_orientation.y() / 2 * tan(fov / 2);
-    tgt_error.x = (image_error.x + vertical_x) * 0.01;
-    tgt_error.y = (image_error.y + vertical_y) * 0.01;
-    tgt_pose.position.x() = drone.getPose().position.x() + tgt_error.x;
-    tgt_pose.position.y() = drone.getPose().position.x() + tgt_error.y;
-    return tgt_pose;
-}
+//DronePose PointTask::runTask() {
+//    image_error.x = (double)frame_size.y/2 - (double)img_target.target_point.y;
+//    image_error.y = (double)frame_size.x/2 - (double)img_target.target_point.x;
+//    tgt_error.x = image_error.x * 0.01;
+//    tgt_error.y = image_error.y * 0.01;
+//    tgt_pose.position.x() = drone.getPose().position.x() + image_error.x;
+//    tgt_pose.position.y() = drone.getPose().position.x() + image_error.y;
+//    return tgt_pose;
+//}
 
 void PointTask::printLog() const {
     ROS_INFO("approaching to point, x:%f, y:%f", tgt_pose.position.x(), tgt_pose.position.y());
