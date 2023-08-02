@@ -131,7 +131,7 @@ DronePose RouteTask::getStayPoint() {
 
 
 PointTask::PointTask(const int & task_id) : Task(task_id) {
-    image_error = cv::Point2i(0, 0);
+    tgt_error = cv::Point2i(0, 0);
     tgt_plane_distance = 0;
 }
 
@@ -151,10 +151,10 @@ PointTask::PointTask(const int & task_id) : Task(task_id) {
 DronePose PointTask::runTask() {
     double theta_x = atan((img_target.target_point.x - cx)/fx);
     double theta_y = atan((img_target.target_point.y - cy)/fy);
-    tgt_error.x = drone.getHeight() * tan(-theta_y - drone.getPose().angular_orientation.x());
-    tgt_error.y = drone.getHeight() * tan(theta_x + drone.getPose().angular_orientation.y());
-    tgt_pose.position.x() = drone.getPose().position.x() + image_error.x;
-    tgt_pose.position.y() = drone.getPose().position.x() + image_error.y;
+    tgt_error.x = drone.getPosition().z() * tan(-theta_y - drone.getPose().angular_orientation.x());
+    tgt_error.y = drone.getPosition().z() * tan(theta_x + drone.getPose().angular_orientation.y());
+    tgt_pose.position.x() = drone.getPose().position.x() + tgt_error.x;
+    tgt_pose.position.y() = drone.getPose().position.x() + tgt_error.y;
     return tgt_pose;
 }
 
@@ -165,7 +165,7 @@ void PointTask::printLog() const {
 
 
 bool PointTask::isTaskFinished() const {
-    if (image_error.x == 0 && image_error.y == 0)
+    if (tgt_error.x == 0 && tgt_error.y == 0)
     {
         ROS_WARN("PointTask Not Init Yet");
         return false;

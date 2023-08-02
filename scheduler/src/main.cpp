@@ -52,7 +52,7 @@ void sendPosition(scheduler::pose_mode &_pose){
 
     _pose.self_x = drone.getPosition().x();
     _pose.self_y = drone.getPosition().y();
-    _pose.self_z = drone.getHeight();
+    _pose.self_z = drone.getPosition().z();
     _pose.self_roll = drone.getAngularOrientation().x();
     _pose.self_pitch = drone.getAngularOrientation().y();
     _pose.self_yaw = drone.getAngularOrientation().z();
