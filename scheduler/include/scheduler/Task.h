@@ -57,6 +57,7 @@ public:
     explicit PointTask(const int & task_id);
     void setFrameSize(const cv::Point2i & frame_size);
     void setTrueValue(const Eigen::Vector3d & _true_value);
+    void setIntrinsicMatrix(const double & _fx, const double & _fy, const double & _cx, const double & _cy);
     void getMessage(const ImageTarget& img_target);
     void setAccumulativeError();
     void printLog() const override;
@@ -70,6 +71,7 @@ private:
     cv::Point2d tgt_error;
     cv::Point2i frame_size;
     Eigen::Vector3d true_value;
+    double fx = 385.5, fy = 321.7, cx = 385.5, cy = 237.5;
     DronePose tgt_pose;
     ImageTarget img_target;
 };

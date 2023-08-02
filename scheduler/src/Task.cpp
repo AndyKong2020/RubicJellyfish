@@ -136,13 +136,23 @@ PointTask::PointTask(const int & task_id) : Task(task_id) {
 }
 
 
+//DronePose PointTask::runTask() {
+//    tgt_plane_distance = sqrt(img_target.depth * img_target.depth - drone.getHeight() * drone.getHeight());
+//    image_error.x = (double)frame_size.y/2 - (double)img_target.target_point.y;
+//    image_error.y = (double)frame_size.x/2 - (double)img_target.target_point.x;
+//    double proportion = tgt_plane_distance / sqrt(pow(image_error.x, 2) + pow(image_error.y, 2));
+//    tgt_error.x = image_error.x * proportion;
+//    tgt_error.y = image_error.y * proportion;
+//    tgt_pose.position.x() = drone.getPose().position.x() + image_error.x;
+//    tgt_pose.position.y() = drone.getPose().position.x() + image_error.y;
+//    return tgt_pose;
+//}
+
 DronePose PointTask::runTask() {
-    tgt_plane_distance = sqrt(img_target.depth * img_target.depth - drone.getHeight() * drone.getHeight());
-    image_error.x = (double)frame_size.y/2 - (double)img_target.target_point.y;
-    image_error.y = (double)frame_size.x/2 - (double)img_target.target_point.x;
-    double proportion = tgt_plane_distance / sqrt(pow(image_error.x, 2) + pow(image_error.y, 2));
-    tgt_error.x = image_error.x * proportion;
-    tgt_error.y = image_error.y * proportion;
+    double theta_x = atan((img_target.target_point.x - cx)/fx);
+    double theta_y = atan((img_target.target_point.y - cy)/fy);
+    tgt_error.x = drone.getHeight() * tan(-theta_y - drone.getPose().angular_orientation.x());
+    tgt_error.y = drone.getHeight() * tan(theta_x + drone.getPose().angular_orientation.y());
     tgt_pose.position.x() = drone.getPose().position.x() + image_error.x;
     tgt_pose.position.y() = drone.getPose().position.x() + image_error.y;
     return tgt_pose;
@@ -193,6 +203,13 @@ void PointTask::setAccumulativeError() {
     true_value[1] += tgt_error.y;
     drone.setAccumulativeError(true_value);
     ROS_WARN("accumulative error x:%f, y:%f", drone.getAccumulativeError().x(), drone.getAccumulativeError().y());
+}
+
+void PointTask::setIntrinsicMatrix(const double &_fx, const double &_fy, const double &_cx, const double &_cy) {
+    fx = _fx;
+    fy = _fy;
+    cx = _cx;
+    cy = _cy;
 }
 
 
