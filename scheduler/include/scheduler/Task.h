@@ -74,6 +74,7 @@ private:
     Eigen::Matrix3d intrinsic_matrix;
     Eigen::Matrix3d inverse_intrinsic_matrix;
     double fx = 385.5, fy = 321.7, cx = 385.5, cy = 237.5;
+    double fov = 2 * atan(480 / (2 * fy)) * M_PI / 180;
     DronePose tgt_pose;
     ImageTarget img_target;
 };
