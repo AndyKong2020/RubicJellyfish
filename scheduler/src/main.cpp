@@ -33,7 +33,7 @@ LandTask *land_task03 = nullptr;
 PointTask *point_task02 = nullptr;
 
 DronePose take_off_point00;
-DronePose route_point00, route_point01, route_point02, route_point03, route_point04, route_point05;
+DronePose route_point00, route_point01, route_point02, route_point03, route_point04, route_point05, route_point06;
 DronePose stay_point00, stay_point01, stay_point02, stay_point03, stay_point04, stay_point05;
 DronePose land_point00;
 double take_off_height00;
@@ -106,22 +106,29 @@ void setParams(){
     stay_point00.position = Eigen::Vector3d(0, 0, 1.2);
     stay_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
 
-    route_point00.position = Eigen::Vector3d(1, 0, 1.2);
+    route_point00.position = Eigen::Vector3d(0.65, 1.3, 1.2);
     route_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point01.position = Eigen::Vector3d(1, 1, 1.2);
+    route_point01.position = Eigen::Vector3d(0.65, 2.9, 1.2);
     route_point01.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point02.position = Eigen::Vector3d(0, 1, 1.2);
+    route_point02.position = Eigen::Vector3d(2.45, 2.9, 1.2);
     route_point02.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point03.position = Eigen::Vector3d(0, 0, 1.2);
+    route_point03.position = Eigen::Vector3d(3.95, 2.9, 1.2);
     route_point03.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_point04.position = Eigen::Vector3d(3.95, 1.25, 1.2);
+    route_point04.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_point05.position = Eigen::Vector3d(2.05, 1.3, 1.2);
+    route_point05.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_point05.position = Eigen::Vector3d(0.5, 0.5, 1.2);
+    route_point05.angular_orientation = Eigen::Vector3d(0, 0, 0);
     route_task01 -> addToRouteList(route_point00);
     route_task01 -> addToRouteList(route_point01);
     route_task01 -> addToRouteList(route_point02);
     route_task01 -> addToRouteList(route_point03);
-    stay_point01.position = Eigen::Vector3d(0, 0, 1.2);
-    stay_point01.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_task01 -> addToRouteList(route_point04);
+    route_task01 -> addToRouteList(route_point05);
+    route_task01 -> addToRouteList(route_point06);
 
-    land_point00.position = Eigen::Vector3d(0, 0, -0.2);
+    land_point00.position = Eigen::Vector3d(0.5, 0.5, -0.2);
     land_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
     land_task03 -> setLandPoint(land_point00);
 
@@ -216,10 +223,10 @@ int main(int argc, char **argv) {
     ros::Rate control_rate(200);
     while (ros::ok()) {
         sendTaskId(0);
-        //runTask(2, take_off_task00);
-        //runTask(2, route_task01);
-        runTask(20, point_task02, img_target);
-        //runTask(0, land_task03);
+        runTask(2, take_off_task00);
+        runTask(0, route_task01);
+        //runTask(20, point_task02, img_target);
+        runTask(0, land_task03);
         ros::spinOnce();
         loop_rate.sleep();
     }
