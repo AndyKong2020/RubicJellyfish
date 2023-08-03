@@ -195,7 +195,7 @@ RotatedRect image_processing::image_threshold(const Mat& srcImg){
     // Convert from BGR to HSV colorspace
     cvtColor(srcImg, midImg, COLOR_BGR2HSV);
     // Detect the object based on HSV Range Values
-    inRange(midImg, Scalar(133, 30, 140), Scalar(180, 255, 255), frame_threshold);
+    inRange(midImg, Scalar(0, 71, 45), Scalar(13, 255, 255), frame_threshold);
     //	灰度化
     //cvtColor(frame_threshold, midImg,COLOR_BGR2GRAY);     //灰度图
     //	中值滤波

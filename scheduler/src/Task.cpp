@@ -130,26 +130,92 @@ DronePose RouteTask::getStayPoint() {
 }
 
 
-PointTask::PointTask(const int &task_id) : Task(task_id) {
-    image_error.x = 0;
-    image_error.y = 0;
+PointTask::PointTask(const int & task_id) : Task(task_id) {
+    tgt_error = cv::Point2d(0, 0);
+    tgt_plane_distance = 0;
+    setIntrinsicMatrix(385.5, 321.7, 385.5, 237.5);
 }
 
-cv::Point2f  PointTask::ImageTask(const imageTarget& img_target) {
-    const int width = 640;
-    const int height = 480;
-    image_error.x = height/2 - img_target.img.y;
-    image_error.y = width/2 - img_target.img.x;
-    float s = sqrtf(image_error.x*image_error.x+image_error.y*image_error.y);
-    image_error.x = image_error.x / s;
-    image_error.y = image_error.y / s;
-    return image_error;
+
+//DronePose PointTask::runTask() {
+//    tgt_plane_distance = sqrt(img_target.depth * img_target.depth - drone.getHeight() * drone.getHeight());
+//    image_error.x = (double)frame_size.y/2 - (double)img_target.target_point.y;
+//    image_error.y = (double)frame_size.x/2 - (double)img_target.target_point.x;
+//    double proportion = tgt_plane_distance / sqrt(pow(image_error.x, 2) + pow(image_error.y, 2));
+//    tgt_error.x = image_error.x * proportion;
+//    tgt_error.y = image_error.y * proportion;
+//    tgt_pose.position.x() = drone.getPose().position.x() + image_error.x;
+//    tgt_pose.position.y() = drone.getPose().position.x() + image_error.y;
+//    return tgt_pose;
+//}
+
+//DronePose PointTask::runTask() {
+//    double theta_x = atan((img_target.target_point.x - cx)/fx);
+//    double theta_y = atan((img_target.target_point.y - cy)/fy);
+//    tgt_error.x = drone.getPosition().z() * tan(-theta_y + drone.getPose().angular_orientation.y());
+//    tgt_error.y = drone.getPosition().z() * tan(theta_x - drone.getPose().angular_orientation.x());
+//    tgt_pose.position.x() = drone.getPose().position.x() + tgt_error.x;
+//    tgt_pose.position.y() = drone.getPose().position.x() + tgt_error.y;
+//    return tgt_pose;
+//}
+
+DronePose PointTask::runTask() {
+    image_error.x = (double)frame_size.y/2 - (double)img_target.target_point.y;
+    image_error.y = (double)frame_size.x/2 - (double)img_target.target_point.x;
+    double vertical_x = 130 * sqrt(frame_size.x * frame_size.x + frame_size.y * frame_size.y) * drone.getPose().angular_orientation.x() / 2 * tan(fov / 2);
+    double vertical_y = 130 * sqrt(frame_size.x * frame_size.x + frame_size.y * frame_size.y) * drone.getPose().angular_orientation.y() / 2 * tan(fov / 2);
+    tgt_error.x = (image_error.x - vertical_y) * 0.002 * drone.getHeight();
+    tgt_error.y = (image_error.y + vertical_x) * 0.002 * drone.getHeight();
+    tgt_pose.position.x() = drone.getPose().position.x() + tgt_error.x;
+    tgt_pose.position.y() = drone.getPose().position.x() + tgt_error.y;
+    tgt_pose.position.z() = 1.5;
+    return tgt_pose;
 }
-bool PointTask::isPointOver() const {
-    DronePose drone_target;
-    drone_target.position.x()=drone_target.position.x()+image_error.x;
-    drone_target.position.y()=drone_target.position.y()+image_error.y;
-    if (position_match(drone.getPose(),drone_target))
+//DronePose PointTask::runTask() {
+//    Eigen::Vector3d pixel_tgt;
+//    pixel_tgt << img_target.target_point.x, img_target.target_point.y, 1;
+//    Eigen::Vector3d camera_tgt;
+//    camera_tgt << drone.getHeight() * (inverse_intrinsic_matrix * pixel_tgt);
+//    Eigen::Vector3d camera_tgt_2;
+//    camera_tgt_2 << -camera_tgt.x(), camera_tgt.y(), camera_tgt.z();
+//    Eigen::Matrix3d rotation_matrix;
+//    rotation_matrix = Eigen::AngleAxisd(-drone.getPose().angular_orientation.z() + M_PI / 2, Eigen::Vector3d::UnitZ())
+//                      * Eigen::AngleAxisd(-drone.getPose().angular_orientation.y(), Eigen::Vector3d::UnitY())
+//                      * Eigen::AngleAxisd(-drone.getPose().angular_orientation.x() - M_PI, Eigen::Vector3d::UnitX());
+//    Eigen::Vector3d translation_vector;
+//    translation_vector << drone.getPose().position.x(), drone.getPose().position.y(), drone.getPose().position.z();
+//    Eigen::Vector3d world_tgt;
+//    world_tgt = rotation_matrix * camera_tgt_2 - translation_vector;
+//    tgt_pose.position.x() = world_tgt.x();
+//    tgt_pose.position.y() = world_tgt.y();
+//    tgt_error.x = tgt_pose.position.x() - drone.getPose().position.x();
+//    tgt_error.y = tgt_pose.position.y() - drone.getPose().position.y();
+//    return tgt_pose;
+//}
+
+//DronePose PointTask::runTask() {
+//    image_error.x = (double)frame_size.y/2 - (double)img_target.target_point.y;
+//    image_error.y = (double)frame_size.x/2 - (double)img_target.target_point.x;
+//    tgt_error.x = image_error.x * 0.01;
+//    tgt_error.y = image_error.y * 0.01;
+//    tgt_pose.position.x() = drone.getPose().position.x() + image_error.x;
+//    tgt_pose.position.y() = drone.getPose().position.x() + image_error.y;
+//    return tgt_pose;
+//}
+
+void PointTask::printLog() const {
+    ROS_INFO("approaching to point, x:%f, y:%f", tgt_pose.position.x(), tgt_pose.position.y());
+}
+
+
+
+bool PointTask::isTaskFinished() const {
+    if (tgt_error.x == 0 && tgt_error.y == 0)
+    {
+        ROS_WARN("PointTask Not Init Yet");
+        return false;
+    }
+    if (position_match(drone.getPose(),tgt_pose))
     {
         return true;
     }
@@ -158,8 +224,41 @@ bool PointTask::isPointOver() const {
         return false;
     }
 }
-DronePose PointTask::runTask() {
+
+void PointTask::setFrameSize(const cv::Point2i &_frame_size) {
+    frame_size = _frame_size;
+
 }
+
+void PointTask::getMessage(const ImageTarget &_img_target) {
+    img_target = _img_target;
+}
+
+DronePose PointTask::getStayPoint() {
+    setAccumulativeError();
+    return tgt_pose;
+}
+
+void PointTask::setTrueValue(const Eigen::Vector3d &_true_value) {
+    true_value = _true_value;
+}
+
+void PointTask::setAccumulativeError() {
+    true_value[0] += tgt_error.x;
+    true_value[1] += tgt_error.y;
+    drone.setAccumulativeError(true_value);
+    ROS_WARN("accumulative error x:%f, y:%f", drone.getAccumulativeError().x(), drone.getAccumulativeError().y());
+}
+
+void PointTask::setIntrinsicMatrix(const double &_fx, const double &_fy, const double &_cx, const double &_cy) {
+    fx = _fx;
+    fy = _fy;
+    cx = _cx;
+    cy = _cy;
+    intrinsic_matrix << fx, 0, cx, 0, fy, cy, 0, 0, 1;
+    inverse_intrinsic_matrix << intrinsic_matrix.inverse();
+}
+
 
 TakeOffTask::TakeOffTask(const int &task_id) : Task(task_id) {
     take_off_point_on_land.position = Eigen::Vector3d::Zero();
