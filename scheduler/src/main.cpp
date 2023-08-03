@@ -128,13 +128,16 @@ void t265Callback(const nav_msgs::Odometry::ConstPtr & msg) {
 }
 
 void setParams(){
+
+    frame_size.x = 640;
+    frame_size.y = 480;
+
+
     take_off_point00.position = Eigen::Vector3d(0, 0, 0);
     take_off_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
     take_off_height00 = 1.2;
     take_off_task00 -> setTakeOffPoint(take_off_point00);
     take_off_task00 -> setTakeOffHeight(take_off_height00);
-    stay_point00.position = Eigen::Vector3d(0, 0, 1.2);
-    stay_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
 
     route_point00.position = Eigen::Vector3d(0.65, 1.3, 1.2);
     route_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
@@ -156,24 +159,62 @@ void setParams(){
     route_task01 -> addToRouteList(route_point03);
     route_task01 -> addToRouteList(route_point04);
     route_task01 -> addToRouteList(route_point05);
-    route_task01 -> addToRouteList(route_point06);
 
     land_point00.position = Eigen::Vector3d(0.5, 0.5, -0.2);
     land_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
     land_task04 -> setLandPoint(land_point00);
 
-    frame_size.x = 640;
-    frame_size.y = 480;
     point_task02 ->setFrameSize(frame_size);
     point_task02 ->ifSetAccumulativeError(false);
 
-    frame_size.x = 640;
-    frame_size.y = 480;
     point_true_value00[0] = 0;
     point_true_value00[1] = 0;
     point_task02 ->setFrameSize(frame_size);
     point_task02 ->setTrueValue(point_true_value00);
     point_task02 ->ifSetAccumulativeError(false);
+
+
+
+    take_off_point10.position = Eigen::Vector3d(0, 0, 0);
+    take_off_point10.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    take_off_height10 = 1.2;
+    take_off_task10 -> setTakeOffPoint(take_off_point10);
+    take_off_task10 -> setTakeOffHeight(take_off_height10);
+
+    route_point10.position = Eigen::Vector3d(0.65, 1.3, 1.2);
+    route_point10.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_point11.position = Eigen::Vector3d(0.65, 2.9, 1.2);
+    route_point11.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_point12.position = Eigen::Vector3d(2.45, 2.9, 1.2);
+    route_point12.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_point13.position = Eigen::Vector3d(3.95, 2.9, 1.2);
+    route_point13.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_point14.position = Eigen::Vector3d(3.95, 1.25, 1.2);
+    route_point14.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_point15.position = Eigen::Vector3d(2.05, 1.3, 1.2);
+    route_point15.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_point15.position = Eigen::Vector3d(0.5, 0.5, 1.2);
+    route_point15.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    route_task11 -> addToRouteList(route_point10);
+    route_task11 -> addToRouteList(route_point11);
+    route_task11 -> addToRouteList(route_point12);
+    route_task11 -> addToRouteList(route_point13);
+    route_task11 -> addToRouteList(route_point14);
+    route_task11 -> addToRouteList(route_point15);
+
+    land_point10.position = Eigen::Vector3d(0.5, 0.5, -0.2);
+    land_point10.angular_orientation = Eigen::Vector3d(0, 0, 0);
+    land_task16 -> setLandPoint(land_point10);
+
+    point_task12 ->setFrameSize(frame_size);
+    point_task12 ->ifSetAccumulativeError(false);
+
+    point_true_value10[0] = 0;
+    point_true_value10[1] = 0;
+    point_task15 ->setFrameSize(frame_size);
+    point_task15 ->setTrueValue(point_true_value00);
+    point_task15 ->ifSetAccumulativeError(false);
+
 }
 void imuCallback(const serial_common::gimbalConstPtr &msg) {   //change drone_control imu to camera imu
 //    Eigen::Quaterniond quaternion(msg->quaw,msg->qua,msg->quay,msg->quaz);
