@@ -11,6 +11,12 @@
 #include "angles/angles.h"
 #include "Drone.h"
 
+enum class DeviceType{
+    NA,
+    SERVO,
+    LED
+};
+
 typedef struct
 {
     cv::Point2i target_point;

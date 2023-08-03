@@ -28,7 +28,7 @@ ros::Publisher plot_z;
 ros::Publisher imu_show;
 ros::Publisher switch_mode;
 bool ifShow;
-onboard_devices device = servo;
+uint8_t device = 0;
 
 std_msgs::Int8 mode;
 gimbal_info gimbalAng;
@@ -78,7 +78,7 @@ void t265poswrite_callback(const scheduler::pose_mode::ConstPtr& msg)
 
 void device_callback(const std_msgs::UInt8& msg)
 {
-    device = (onboard_devices)msg.data;
+    device = msg.data;
 }
 
 int main (int argc, char** argv)

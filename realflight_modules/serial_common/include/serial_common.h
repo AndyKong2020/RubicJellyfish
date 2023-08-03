@@ -14,9 +14,7 @@
 #include <vector>
 
 using namespace std;
-enum onboard_devices{
-    servo,light
-};
+
 typedef struct
 {
     float self_z = 0;

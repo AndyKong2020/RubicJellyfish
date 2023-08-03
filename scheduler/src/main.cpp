@@ -32,7 +32,8 @@ DronePose fire_pose;
 ImageTarget img_target;
 cv::Point2i frame_size;
 bool is_send_fire_position_flag = false;
-uint8_t round_no_ = 0;
+uint8_t mission = 1;
+DeviceType device_type = DeviceType::NA;
 
 TakeOffTask *take_off_task00 = nullptr;
 RouteTask *route_task01 = nullptr;
@@ -44,8 +45,9 @@ TakeOffTask *take_off_task10 = nullptr;
 RouteTask *route_task11 = nullptr;
 PointTask *point_task12 = nullptr;
 RouteTask *route_task13 = nullptr;
-PointTask *point_task14 = nullptr;
-LandTask *land_task15 = nullptr;
+RouteTask *route_task14 = nullptr;
+PointTask *point_task15 = nullptr;
+LandTask *land_task16 = nullptr;
 
 
 DronePose take_off_point00;
@@ -66,6 +68,13 @@ void sendTaskId(const int & task_id)
 {
     current_task_id.data = task_id;
     task_id_pub.publish(current_task_id);
+}
+
+void useDevice(const DeviceType & _device_type)
+{
+    std_msgs::UInt8 device;
+    device.data = (uint8_t)_device_type;
+    device_pub.publish(device);
 }
 
 void sendPosition(scheduler::pose_mode &_pose){
@@ -98,6 +107,7 @@ void sendPosition(scheduler::pose_mode &_pose){
     _pose.target_wpitch = 0;
     _pose.target_wyaw = 0;
     pose_mode_pub.publish(_pose);
+    useDevice(device_type);
 }
 //void sendVelocity(scheduler::velocity_mode &velocity){
 //
@@ -179,6 +189,10 @@ void imgCallback(const recognize::imageConstPtr &msg) {   //change drone_control
     img_target.is_detect = msg->mode;
 }
 
+void missionCallback(const std_msgs::UInt8 &msg) {
+    mission = msg.data;
+}
+
 void stay(const DronePose & _pose, const double & time){
     target_pose.position = _pose.position;
     target_pose.angular_orientation = _pose.angular_orientation;
@@ -240,10 +254,17 @@ int main(int argc, char **argv) {
 
     take_off_task00 = new TakeOffTask(0);
     route_task01 = new RouteTask(1);
-    land_task04 = new LandTask(4);
     point_task02 = new PointTask(2);
     point_task03 = new PointTask(3);
+    land_task04 = new LandTask(4);
 
+    take_off_task10 = new TakeOffTask(10);
+    route_task11 = new RouteTask(11);
+    point_task12 = new PointTask(12);
+    route_task13 = new RouteTask(13);
+    route_task14 = new RouteTask(14);
+    point_task15 = new PointTask(15);
+    land_task16 = new LandTask(16);
 
     pose_mode_pub = nh.advertise<scheduler::pose_mode>("/t265/pos", 1);
     task_id_pub = nh.advertise<std_msgs::UInt8>("/task_id", 1);
@@ -251,25 +272,29 @@ int main(int argc, char **argv) {
     target_pub = nh.advertise<geometry_msgs::PoseStamped>("/target", 10);
     ros::Subscriber imu = nh.subscribe("/imu_show",10,imuCallback);
     ros::Subscriber img = nh.subscribe("/image/write",10,imgCallback);
-
-    //velocity_mode_pub = nh.advertise<scheduler::velocity_mode>("/t265/velocity", 1);
+    ros::Subscriber t265_sub = nh.subscribe("/t265/odom/sample", 10, t265Callback);
+    ros::Subscriber mission_sub = nh.subscribe("/switch_mode", 10, missionCallback);
 
     setParams();
 
-    ros::Subscriber t265_sub = nh.subscribe("/t265/odom/sample", 10, t265Callback);
     ros::Rate loop_rate(200);
     ros::Rate control_rate(200);
     while (ros::ok()) {
+        device_type = DeviceType::NA;
         sendTaskId(0);
-        if (round_no_ == 1){
+        if (mission == 1){
+            ROS_WARN("RUNNING MISSION 1");
             runTask(2, take_off_task00);
 
-            ROS_WARN("Task%d Start", route_task01 -> getTaskId());
             while (!route_task01->isTaskFinished()){
                 if (img_target.is_detect && !is_send_fire_position_flag){
+                    ROS_WARN("FIRE DETECTED！！！！！！！！！！");
                     runTask(0, point_task02, img_target);
+                    //TODO：发送火焰位置
+                    ROS_WARN("FIRE POSITION SENDED！！！！！！！！！！");
                     is_send_fire_position_flag = true;
                 }
+                ROS_WARN("BACK TO ROUTE！！！！！！！！！！");
                 sendTaskId(route_task01 -> getTaskId());
                 target_pose = route_task01 -> runTask();
                 sendPosition(pose);
@@ -286,31 +311,49 @@ int main(int argc, char **argv) {
             runTask(2, point_task03, img_target);
             runTask(0, land_task04);
             //runTask(0, land_task03);
-        }else if (round_no_ == 1){
-            runTask(2, take_off_task00);
+        }else if (mission == 2){
+            ROS_WARN("RUNNING MISSION 2");
 
-            ROS_WARN("Task%d Start", route_task01 -> getTaskId());
-            while (!route_task01->isTaskFinished()){
+            runTask(2, take_off_task10);
+
+            ROS_WARN("Task%d Start", route_task11 -> getTaskId());
+            while (!route_task11->isTaskFinished()){
                 if (img_target.is_detect && !is_send_fire_position_flag){
-                    runTask(0, point_task02, img_target);
+                    ROS_WARN("FIRE DETECTED！！！！！！！！！！");
+                    device_type = DeviceType::LED;
+                    runTask(0, point_task12, img_target);
+                    ROS_WARN("FIRE AIMED！！！！！！！！！！");
+                    fire_pose = point_task12 -> getStayPoint();
+                    DronePose lower_fire_pose = fire_pose;
+                    lower_fire_pose.position.z() -= 1;
+                    //TODO：发送火焰位置
                     is_send_fire_position_flag = true;
+                    route_task13 -> addToRouteList(fire_pose);
+                    route_task13 -> addToRouteList(lower_fire_pose);
+                    runTask(2, route_task13);
+                    ROS_WARN("DROP BAG！！！！！！！！！！");
+                    device_type = DeviceType::SERVO;
+                    stay(lower_fire_pose, 5);
+                    route_task14 -> addToRouteList(fire_pose);
+                    runTask(2, route_task14);
+                    device_type = DeviceType::NA;
                 }
-                sendTaskId(route_task01 -> getTaskId());
-                target_pose = route_task01 -> runTask();
+                ROS_WARN("BACK TO ROUTE！！！！！！！！！！");
+
+                sendTaskId(route_task11 -> getTaskId());
+                target_pose = route_task11 -> runTask();
                 sendPosition(pose);
-                route_task01 -> printLog();
+                route_task11 -> printLog();
                 ros::spinOnce();
                 control_rate.sleep();
             }
-            ROS_WARN("Task%d Finished", route_task01 -> getTaskId());
-            stay(route_task01 -> getStayPoint(), 1);
-            sendTaskId(3);
-            sendTaskId(3);
-            sendTaskId(3);
-            //        runTask(0, route_task01);
-            runTask(2, point_task03, img_target);
-            runTask(0, land_task04);
-            //runTask(0, land_task03);7
+            ROS_WARN("Task%d Finished", route_task11 -> getTaskId());
+            stay(route_task11 -> getStayPoint(), 1);
+            sendTaskId(15);
+            sendTaskId(15);
+            sendTaskId(15);
+            runTask(2, point_task15, img_target);
+            runTask(0, land_task16);
         }
 
         ros::spinOnce();
