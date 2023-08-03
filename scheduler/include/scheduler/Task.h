@@ -15,6 +15,8 @@ typedef struct
 {
     cv::Point2i target_point;
     float depth;
+    uint8_t is_detect;
+
 }ImageTarget;
 
 class Task
@@ -61,11 +63,13 @@ public:
     void getMessage(const ImageTarget& img_target);
     void setAccumulativeError();
     void printLog() const override;
+    void ifSetAccumulativeError(const bool & _if_accumulative_error);
     DronePose runTask() override;
     DronePose getStayPoint() override;
     bool isTaskFinished() const override;
 private:
     Eigen::Vector3d accumulative_error;
+    bool if_accumulative_error = false;
     double tgt_plane_distance;
     cv::Point2d image_error;
     cv::Point2d tgt_error;

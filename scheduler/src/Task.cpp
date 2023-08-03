@@ -235,7 +235,9 @@ void PointTask::getMessage(const ImageTarget &_img_target) {
 }
 
 DronePose PointTask::getStayPoint() {
-    setAccumulativeError();
+    if (if_accumulative_error){
+        setAccumulativeError();
+    }
     return tgt_pose;
 }
 
@@ -257,6 +259,10 @@ void PointTask::setIntrinsicMatrix(const double &_fx, const double &_fy, const d
     cy = _cy;
     intrinsic_matrix << fx, 0, cx, 0, fy, cy, 0, 0, 1;
     inverse_intrinsic_matrix << intrinsic_matrix.inverse();
+}
+
+void PointTask::ifSetAccumulativeError(const bool &_if_accumulative_error) {
+    if_accumulative_error = _if_accumulative_error;
 }
 
 

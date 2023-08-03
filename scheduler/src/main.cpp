@@ -27,22 +27,39 @@ scheduler::pose_mode pose;
 std_msgs::UInt8 current_task_id;
 
 DronePose target_pose;
+DronePose fire_pose;
 ImageTarget img_target;
+cv::Point2i frame_size;
+bool is_send_fire_position_flag = false;
+uint8_t round_no_ = 0;
 
 TakeOffTask *take_off_task00 = nullptr;
 RouteTask *route_task01 = nullptr;
-LandTask *land_task03 = nullptr;
+LandTask *land_task04 = nullptr;
 PointTask *point_task02 = nullptr;
+PointTask *point_task03 = nullptr;
+
+TakeOffTask *take_off_task10 = nullptr;
+RouteTask *route_task11 = nullptr;
+LandTask *land_task14 = nullptr;
+PointTask *point_task12 = nullptr;
+PointTask *point_task13 = nullptr;
+
+
 
 DronePose take_off_point00;
 DronePose route_point00, route_point01, route_point02, route_point03, route_point04, route_point05, route_point06;
 DronePose stay_point00, stay_point01, stay_point02, stay_point03, stay_point04, stay_point05;
 DronePose land_point00;
 double take_off_height00;
-cv::Point2i frame_size;
 Eigen::Vector3d point_true_value00;
 
-
+DronePose take_off_point10;
+DronePose route_point10, route_point11, route_point12, route_point13, route_point14, route_point15, route_point16;
+DronePose stay_point10, stay_point11, stay_point12, stay_point13, stay_point14, stay_point15;
+DronePose land_point10;
+double take_off_height10;
+Eigen::Vector3d point_true_value10;
 
 void sendTaskId(const int & task_id)
 {
@@ -132,7 +149,12 @@ void setParams(){
 
     land_point00.position = Eigen::Vector3d(0.5, 0.5, -0.2);
     land_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    land_task03 -> setLandPoint(land_point00);
+    land_task04 -> setLandPoint(land_point00);
+
+    frame_size.x = 640;
+    frame_size.y = 480;
+    point_task02 ->setFrameSize(frame_size);
+    point_task02 ->ifSetAccumulativeError(false);
 
     frame_size.x = 640;
     frame_size.y = 480;
@@ -140,6 +162,7 @@ void setParams(){
     point_true_value00[1] = 0;
     point_task02 ->setFrameSize(frame_size);
     point_task02 ->setTrueValue(point_true_value00);
+    point_task02 ->ifSetAccumulativeError(false);
 }
 void imuCallback(const serial_common::gimbalConstPtr &msg) {   //change drone_control imu to camera imu
 //    Eigen::Quaterniond quaternion(msg->quaw,msg->qua,msg->quay,msg->quaz);
@@ -152,6 +175,7 @@ void imgCallback(const recognize::imageConstPtr &msg) {   //change drone_control
     img_target.target_point.x = msg->x;
     img_target.target_point.y = msg->y;
     img_target.depth = msg->depth;
+    img_target.is_detect = msg->mode;
 }
 
 void stay(const DronePose & _pose, const double & time){
@@ -184,8 +208,8 @@ void runTask(const double & stay_time, Task * task){
 void runTask(const double & stay_time, PointTask * task, const ImageTarget & _image_target){
     ros::Rate control_rate(200);
     ROS_WARN("Task%d Start", task -> getTaskId());
-//    while (!task->isTaskFinished()){
-    while (1){
+    while (!task->isTaskFinished()){
+    //while (1){
         sendTaskId(task -> getTaskId());
         task -> getMessage(_image_target);
         target_pose = task -> runTask();
@@ -215,8 +239,9 @@ int main(int argc, char **argv) {
 
     take_off_task00 = new TakeOffTask(0);
     route_task01 = new RouteTask(1);
-    land_task03 = new LandTask(3);
+    land_task04 = new LandTask(4);
     point_task02 = new PointTask(2);
+    point_task03 = new PointTask(3);
 
 
     pose_mode_pub = nh.advertise<scheduler::pose_mode>("/t265/pos", 1);
@@ -233,10 +258,58 @@ int main(int argc, char **argv) {
     ros::Rate control_rate(200);
     while (ros::ok()) {
         sendTaskId(0);
-//        runTask(2, take_off_task00);
-//        runTask(0, route_task01);
-        runTask(0, point_task02, img_target);
-        //runTask(0, land_task03);
+        if (round_no_ == 1){
+            runTask(2, take_off_task00);
+
+            ROS_WARN("Task%d Start", route_task01 -> getTaskId());
+            while (!route_task01->isTaskFinished()){
+                if (img_target.is_detect && !is_send_fire_position_flag){
+                    runTask(0, point_task02, img_target);
+                    is_send_fire_position_flag = true;
+                }
+                sendTaskId(route_task01 -> getTaskId());
+                target_pose = route_task01 -> runTask();
+                sendPosition(pose);
+                route_task01 -> printLog();
+                ros::spinOnce();
+                control_rate.sleep();
+            }
+            ROS_WARN("Task%d Finished", route_task01 -> getTaskId());
+            stay(route_task01 -> getStayPoint(), 1);
+            sendTaskId(3);
+            sendTaskId(3);
+            sendTaskId(3);
+            //        runTask(0, route_task01);
+            runTask(2, point_task03, img_target);
+            runTask(0, land_task04);
+            //runTask(0, land_task03);
+        }else if (round_no_ == 1){
+            runTask(2, take_off_task00);
+
+            ROS_WARN("Task%d Start", route_task01 -> getTaskId());
+            while (!route_task01->isTaskFinished()){
+                if (img_target.is_detect && !is_send_fire_position_flag){
+                    runTask(0, point_task02, img_target);
+                    is_send_fire_position_flag = true;
+                }
+                sendTaskId(route_task01 -> getTaskId());
+                target_pose = route_task01 -> runTask();
+                sendPosition(pose);
+                route_task01 -> printLog();
+                ros::spinOnce();
+                control_rate.sleep();
+            }
+            ROS_WARN("Task%d Finished", route_task01 -> getTaskId());
+            stay(route_task01 -> getStayPoint(), 1);
+            sendTaskId(3);
+            sendTaskId(3);
+            sendTaskId(3);
+            //        runTask(0, route_task01);
+            runTask(2, point_task03, img_target);
+            runTask(0, land_task04);
+            //runTask(0, land_task03);7
+        }
+
         ros::spinOnce();
         loop_rate.sleep();
     }
