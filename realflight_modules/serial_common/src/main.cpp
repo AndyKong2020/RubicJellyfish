@@ -4,6 +4,7 @@
 #include <serial/serial.h>
 #include <std_msgs/String.h>
 #include <std_msgs/Int8.h>
+#include <std_msgs/UInt8.h>
 #include <std_msgs/Float32.h>
 #include "iomanip"
 #include <stdlib.h>
@@ -25,12 +26,14 @@ using namespace std;
 SerialCommon ser;
 ros::Publisher plot_z;
 ros::Publisher imu_show;
+ros::Publisher switch_mode;
 bool ifShow;
 
 std_msgs::Int8 mode;
 gimbal_info gimbalAng;
-serial_common::gimbal  _imu;
+serial_common::gimbal _imu;
 serial_common::plot_test test;
+std_msgs::UInt8 mode_switch;
 
 void t265poswrite_callback(const scheduler::pose_mode::ConstPtr& msg)
 {
@@ -95,8 +98,10 @@ int main (int argc, char** argv)
 
     plot_z = nh.advertise<serial_common::plot_test>("/plot_z", 1);
     imu_show = nh.advertise<serial_common::gimbal>("/imu_show", 1);
+    switch_mode = nh.advertise<std_msgs::UInt8>("/switch_mode", 1);
     ros::Subscriber t265pos_sub = nh.subscribe("/t265/pos",1,t265poswrite_callback);
     ros::Subscriber image_sub = nh.subscribe("/image/write", 1, imagewrite_callback);
+
 
     //设置串口属性，并打开串口
 
@@ -110,6 +115,7 @@ int main (int argc, char** argv)
         uint8_t _sumcheck = gimbalAng.sumcheck,_addcheck = gimbalAng.addcheck;
         cal_sum(&gimbalAng);
         if(gimbalAng.sumcheck == _sumcheck && gimbalAng.addcheck == _addcheck){
+            mode_switch.data = gimbalAng.id;
             _imu.x = gimbalAng.x;
             _imu.y = gimbalAng.y;
             _imu.z = gimbalAng.z;
@@ -124,6 +130,7 @@ int main (int argc, char** argv)
             _imu.quay = gimbalAng.quay;
             _imu.quaz = gimbalAng.quaz;
             imu_show.publish(_imu);
+            switch_mode.publish(mode_switch);
         }
         ros::spinOnce();
         loop_rate.sleep();

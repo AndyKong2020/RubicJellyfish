@@ -13,6 +13,7 @@
 #include <chrono>
 #include <cv_bridge/cv_bridge.h>
 #include <sensor_msgs/Image.h>
+#include <std_msgs/UInt8.h>
 #include <string>
 #include "recognize/image_processing.h"
 #include "recognize/matchTemplate.h"
@@ -29,12 +30,13 @@ ros::Publisher image_pub;
 image_processing depth_img;
 vector<decodedObject> decode_rec;
 image_processing _img;
-Mat test1 = imread("/home/robin/1.jpg");
-Mat test2 = imread("/home/nuaa/wolf_big.jpg");
 ov::CompiledModel final_model;
+uint8_t task_id;
 float d_value = 0;
 cv::Rect img_res;
 float d_res;
+uint8_t last_mode = 0;
+
 void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
     recognize::image _image;
     RotatedRect final_box;
@@ -52,13 +54,6 @@ void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
         ROS_ERROR("cv_bridge exception: %s", e.what());
         return;
     }
-
-/*             //barcode and qrcode
-
-    //_img.decode(img_show,decode_rec); // recognize the code
-    //decode_rec.clear(); // don't forget to clear the vector
-
-*/
 
     final_box = _img.image_threshold(img_show);
     //_img.tool_tohsv(img_show);
@@ -83,19 +78,27 @@ void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
     std::cout << "xxx: " << final_box.center.x << std::endl;
     std::cout << "yyy: " << final_box.center.y << std::endl;
     //std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
-    if(final_box.center.x != 0 && final_box.center.y != 0 && final_box.boundingRect().area() >= 2000) {
-        img_res.x = final_box.center.x;
-        img_res.y = final_box.center.y;
-        d_res = d_value;
+
+    uint8_t num = 0;
+    if((last_mode = 0)){
+        num = 50;
+    } else if((last_mode = 1)){
+        num = 0;
     }
-    _image.mode = 1;
-    _image.type = 1;
+    if(_img.image_check(final_box,0,2000,task_id,num,img_res)){
+        d_res = d_value;
+        _image.mode = 1;
+    }else{
+        _image.mode = 0;
+    }
+
     _image.x = img_res.x;
     _image.y = img_res.y;
     _image.depth = d_res;
     depth_img.target.x = img_res.x;
     depth_img.target.y = img_res.y;
     cout<< "Value of depth_pic's pixel= "<<_image.depth<<endl;
+    last_mode = _image.mode;
 
     if(_image.x !=0 && _image.y != 0 && _image.depth != 0)
         image_pub.publish(_image);
@@ -109,7 +112,25 @@ void Depth_cb(const sensor_msgs::ImageConstPtr &msg) {
     ushort d = depth_pic.at<ushort>(depth_img.target);           //读取深度值，数据类型为ushort单位为ｍｍ
     d_value = float(d)/1000 ;      //强制转换
     //cout<< "Value of depth_pic's pixel= "<<d_value<<endl;
+}
 
+void Task_cb(const std_msgs::UInt8 &msg) {
+    task_id = msg.data;
+    if(task_id == 0){
+        _img.l1 = 0;
+        _img.l2 = 0;
+        _img.l3 = 0;
+        _img.h1 = 0;
+        _img.h2 = 0;
+        _img.h3 = 0;
+    }else if(task_id == 1 || task_id == 2){
+        _img.l1 = 0;
+        _img.l2 = 0;
+        _img.l3 = 0;
+        _img.h1 = 0;
+        _img.h2 = 0;
+        _img.h3 = 0;
+    }
 }
 int main(int argc, char **argv) {
     ros::init(argc, argv, "recognize");
@@ -117,26 +138,8 @@ int main(int argc, char **argv) {
     ros::Subscriber resultsSub = n.subscribe("/d435/color/image_raw", 20, &Image_cb);
     ros::Subscriber DepthSub = n.subscribe("/d435/aligned_depth_to_color/image_raw", 20, &Depth_cb);
     image_pub = n.advertise<recognize::image>("/image/write", 20);
-
+    ros::Subscriber TaskSub = n.subscribe("/task_id", 20, &Task_cb);
     //final_model = yolo_init("/home/robin/yolov5/runs/train/exp2/weights/best.xml");
-    ros::Time start = ros::Time::now();
-
-//the test of match_template
-
-//    Rect _roi;
-//    float _i = 0.8;
-//    Mat display = test2.clone();
-//    _temp.Mark(test1, true);
-//    _temp.Match(test2, _roi,_i);
-//    Point center={_roi.x+test1.cols/2,_roi.y+test1.rows/2};
-//    cv::circle(display,center,50,Scalar(200, 255, 200),6);
-//    imshow("model",test1);
-//    imshow("show",display);
-
-    //yolov5_identify(img_show);
-    //decode_dis(test1);
-    //_img.decode(test1,decode_rec);
-    //std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
     ros::Rate loop_rate(10);
     while (ros::ok()) {
         ros::spinOnce();

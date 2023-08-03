@@ -23,6 +23,7 @@
 //Eigen头文件必须在opencv2/core/eigen.hpp前
 #include<Eigen/Core>
 #include <zbar.h>
+#include "recognize/image.h"
 #include <opencv4/opencv2/opencv.hpp>
 #include "openvino/modelManager.h"
 #include "../DigitalRecognition/InferResult.h"
@@ -55,8 +56,11 @@ public :
     Point point;
     map<int, int> HP;
     RotatedRect image_threshold(const Mat& srcImg);
-    void decode(Mat &im, vector<decodedObject>&decodedObjects);
     int tool_tohsv(const Mat& Img);
+    uint8_t l1 = 0,l2 = 0,l3 = 0;
+    uint8_t h1 = 0 ,h2 = 0 ,h3 = 0;
+    bool image_check(RotatedRect &target,const uint8_t &minsize,const uint8_t &maxsize,const uint8_t &task_id,const uint8_t &num,cv::Rect &res);
+    float d_res = 0;
 
 };
 const int max_value_H = 360/2;

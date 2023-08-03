@@ -36,61 +36,6 @@ static void on_high_V_thresh_trackbar(int, void *)
     high_V = max(high_V, low_V+1);
     setTrackbarPos("High V", window_detection_name, high_V);
 }
-// 查找和解码条形码和二维码
-void image_processing::decode(Mat &im, vector<decodedObject>&decodedObjects)
-{
-    //im = imread("/home/robin/1.png");
-    // Create zbar scanner
-    zbar::ImageScanner scanner;
-    // 创建 zbar 扫描仪
-    scanner.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_ENABLE, 1);
-    // 将图像转换为灰度
-    Mat imGray;
-    cvtColor(im, imGray,CV_BGR2GRAY);
-    // 将图像数据包装在 zbar 图像中
-    zbar::Image image(im.cols, im.rows, "Y800", (uchar *)imGray.data, im.cols * im.rows);
-    // 扫描条形码和二维码的图像
-    int n = scanner.scan(image);
-    // 打印结果
-    for(zbar::Image::SymbolIterator symbol = image.symbol_begin(); symbol != image.symbol_end(); ++symbol)
-    {
-        decodedObject obj;
-        obj.type = symbol->get_type_name();
-        obj.data = symbol->get_data();
-        // 打印 type 和 data
-        cout << "Type : " << obj.type << endl;
-        cout << "n:::"<< n <<endl;
-        cout << "Data : " << obj.data << endl << endl;
-        // 获取位置
-        for(int i = 0; i< symbol->get_location_size(); i++)
-        {
-            obj.location.emplace_back(symbol->get_location_x(i),symbol->get_location_y(i));
-        }
-        decodedObjects.push_back(obj);
-    }
-    // 显示条码和二维码位置
-    // 遍历所有解码对象
-    for(int i = 0; i < decodedObjects.size(); i++)
-    {
-        vector<Point> points = decodedObjects[i].location;
-        vector<Point> hull;
-        // 如果点不形成四边形，请找到凸包
-        if(points.size() > 4)
-            convexHull(points, hull);
-        else
-            hull = points;
-        // 凸包中的点数
-        int n = hull.size();
-
-        for(int j = 0; j < n; j++)
-        {
-            line(im, hull[j], hull[ (j+1) % n], Scalar(255,0,0), 3);
-        }
-    }
-    // 显示结果
-    imshow("Results", im);
-    waitKey(1);
-}
 
 // the tools of choosing the right hsv threshold
 int image_processing::tool_tohsv(const Mat& Img){
@@ -195,7 +140,7 @@ RotatedRect image_processing::image_threshold(const Mat& srcImg){
     // Convert from BGR to HSV colorspace
     cvtColor(srcImg, midImg, COLOR_BGR2HSV);
     // Detect the object based on HSV Range Values
-    inRange(midImg, Scalar(0, 71, 45), Scalar(13, 255, 255), frame_threshold);
+    inRange(midImg, Scalar(l1, l2, l3), Scalar(h1, h2, h3), frame_threshold);
     //	灰度化
     //cvtColor(frame_threshold, midImg,COLOR_BGR2GRAY);     //灰度图
     //	中值滤波
@@ -247,6 +192,24 @@ RotatedRect image_processing::image_threshold(const Mat& srcImg){
     return final_box;
 }
 
+bool image_processing::image_check(RotatedRect &target,const uint8_t &minsize,const uint8_t &maxsize,
+                                   const uint8_t &task_id,const uint8_t &num,cv::Rect &res){
+    bool flag = false;
+    if(task_id == 0) {
+        res.x = 0;
+        res.y = 0;
+    }else if(task_id == 1 || task_id == 2){
+        if(target.center.x > num && target.center.x < 640-num && target.center.y > num && target.center.y < 480-num
+            && target.boundingRect().area() <= maxsize && target.boundingRect().area() >= minsize){
+            flag = true;
+            res.x = target.center.x;
+            res.y = target.center.y;
+        }
+    }
+
+    return flag;
+
+}
 
 //用作对原图像进行处理，讲处理后的图像送入神经网络识别端。可保存样本图片，记得修改初始计数值
 void image_processing::Picture_process(image_processing &image) {
