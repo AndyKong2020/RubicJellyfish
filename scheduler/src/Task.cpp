@@ -162,12 +162,13 @@ PointTask::PointTask(const int & task_id) : Task(task_id) {
 DronePose PointTask::runTask() {
     image_error.x = (double)frame_size.y/2 - (double)img_target.target_point.y;
     image_error.y = (double)frame_size.x/2 - (double)img_target.target_point.x;
-    double vertical_x = 135 * sqrt(frame_size.x * frame_size.x + frame_size.y * frame_size.y) * drone.getPose().angular_orientation.x() / 2 * tan(fov / 2);
-    double vertical_y = 135 * sqrt(frame_size.x * frame_size.x + frame_size.y * frame_size.y) * drone.getPose().angular_orientation.y() / 2 * tan(fov / 2);
-    tgt_error.x = (image_error.x - vertical_y) * 0.008;
-    tgt_error.y = (image_error.y + vertical_x) * 0.008;
+    double vertical_x = 130 * sqrt(frame_size.x * frame_size.x + frame_size.y * frame_size.y) * drone.getPose().angular_orientation.x() / 2 * tan(fov / 2);
+    double vertical_y = 130 * sqrt(frame_size.x * frame_size.x + frame_size.y * frame_size.y) * drone.getPose().angular_orientation.y() / 2 * tan(fov / 2);
+    tgt_error.x = (image_error.x - vertical_y) * 0.002 * drone.getHeight();
+    tgt_error.y = (image_error.y + vertical_x) * 0.002 * drone.getHeight();
     tgt_pose.position.x() = drone.getPose().position.x() + tgt_error.x;
     tgt_pose.position.y() = drone.getPose().position.x() + tgt_error.y;
+    tgt_pose.position.z() = 1.5;
     return tgt_pose;
 }
 //DronePose PointTask::runTask() {
