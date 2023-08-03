@@ -71,17 +71,17 @@ void t265poswrite_callback(const scheduler::pose_mode::ConstPtr& msg)
     ser.serSend<t265_pos>(pos,pos.length);
 }
 
-void imagewrite_callback(const recognize::image::ConstPtr& msg)
-{
-  image_target shootTgt;
-  vector<float> data;
-  shootTgt.mode = 2;
-  int length = 16;
-
-  shootTgt.length = length;
-  cal_sum(&shootTgt);
-  ser.serSend<image_target>(shootTgt,length);
-}
+//void imagewrite_callback(const recognize::image::ConstPtr& msg)
+//{
+//  image_target shootTgt;
+//  vector<float> data;
+//  shootTgt.mode = 2;
+//  int length = 16;
+//
+//  shootTgt.length = length;
+//  cal_sum(&shootTgt);
+//  ser.serSend<image_target>(shootTgt,length);
+//}
 
 int main (int argc, char** argv)
 {
@@ -96,7 +96,7 @@ int main (int argc, char** argv)
     plot_z = nh.advertise<serial_common::plot_test>("/plot_z", 1);
     imu_show = nh.advertise<serial_common::gimbal>("/imu_show", 1);
     ros::Subscriber t265pos_sub = nh.subscribe("/t265/pos",1,t265poswrite_callback);
-    ros::Subscriber image_sub = nh.subscribe("/image/write", 1, imagewrite_callback);
+    //ros::Subscriber image_sub = nh.subscribe("/image/write", 1, imagewrite_callback);
 
     //设置串口属性，并打开串口
 
