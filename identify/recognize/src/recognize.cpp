@@ -20,6 +20,10 @@
 #include "recognize/yolox.h"
 #include "recognize/yolov5.h"
 #include "recognize/image.h"
+#include<librealsense2/rsutil.h>
+#include <librealsense2/hpp/rs_processing.hpp>
+#include <librealsense2/hpp/rs_types.hpp>
+#include <librealsense2/hpp/rs_sensor.hpp>
 using namespace std;
 using namespace cv;
 using namespace zbar;
@@ -37,7 +41,25 @@ cv::Rect img_res;
 float d_res;
 uint8_t last_mode = 0;
 
+rs2::pipeline pipeline;
+
+void setExposure(const float& camera_exposure){
+    rs2::sensor sensor;
+    pipeline = rs2::pipeline();
+    sensor = pipeline.get_active_profile().get_device().query_sensors()[1];
+//    try{
+//        sensor.set_option(RS2_OPTION_EXPOSURE, camera_exposure);
+//    }
+    sensor.set_option(RS2_OPTION_EXPOSURE, camera_exposure);
+
+//    catch (const rs2::error &e) {
+//        std::cerr << "Failed to set option " << ". (" << e.what() << ")" << std::endl;
+//    }
+}
+
+
 void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
+    setExposure(100);
     recognize::image _image;
     RotatedRect final_box;
     ros::Time start = ros::Time::now();
