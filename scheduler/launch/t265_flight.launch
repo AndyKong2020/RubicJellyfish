@@ -1,5 +1,6 @@
 <launch>
    <node pkg="scheduler" type="scheduler_node" output="screen" name="scheduler" respawn="true" />
+   <node pkg="mv_driver" type="mv_driver_node" name="mv_driver_node" output="screen" respawn="true"/>
    <node pkg="serial_common" type="serial_common_node" output="screen" name="serial_common" respawn="true" />
    <node pkg="recognize" type="recognize_node" output="screen" name="recognize" respawn="true" />
 </launch>
