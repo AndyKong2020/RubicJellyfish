@@ -31,7 +31,8 @@ inline bool position_match(const DronePose & a, const DronePose & b)
 {
     //计算两点距离
     double distance = sqrt(pow(a.position.x() - b.position.x(), 2) + pow(a.position.y() - b.position.y(), 2));
-    return distance < 0.05;
+    ROS_INFO("%d", distance);
+    return distance < 0.1;
 }
 
 inline bool orientation_match(const DronePose & a, const DronePose & b)
@@ -97,7 +98,7 @@ void RouteTask::printLog() const {
 DronePose RouteTask::runTask() {
     while(route_index < route_list.size())
     {
-        if (pose_match(drone.getPose(), route_list[route_index]))
+        if (position_match(drone.getPose(), route_list[route_index]))
         {
             ROS_WARN("RouteTask %d: Arrived at route point %d", task_id, route_index);
             return nextRoutePoint();
@@ -293,6 +294,11 @@ inline bool height_match(const DronePose & a, const DronePose & b)
     return abs(a.position.z() - b.position.z()) < 0.02;
 }
 
+inline bool height_match(const double & a, const DronePose & b)
+{
+    return abs(a - b.position.z()) < 0.02;
+}
+
 DronePose TakeOffTask::runTask() {
     if (height_match(drone.getPose(), take_off_point_in_air))
     {
@@ -306,7 +312,7 @@ DronePose TakeOffTask::runTask() {
 }
 
 bool TakeOffTask::isTaskFinished() const {
-    if (height_match(drone.getPose(), take_off_point_in_air))
+    if (height_match(drone.getHeight(), take_off_point_in_air))
     {
         return true;
     }
