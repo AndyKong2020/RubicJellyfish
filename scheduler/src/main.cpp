@@ -69,8 +69,8 @@ Eigen::Vector3d point_true_value10;
 
 MessageToCar generateMessageToCar(const DronePose & _fire_pose){
     MessageToCar _message_to_car;
-    _message_to_car.x = -_fire_pose.position.x();
-    _message_to_car.y = _fire_pose.position.y();
+    _message_to_car.x = -_fire_pose.position.x() + 0.5;
+    _message_to_car.y = _fire_pose.position.y() + 0.5;
     if (fire_pose.position.x() > -2.3) {
         if (fire_pose.position.y() < 1.9) {
             if (fire_pose.position.x() > -1.55) {
