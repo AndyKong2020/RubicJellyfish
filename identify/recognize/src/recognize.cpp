@@ -119,6 +119,8 @@ void Task_cb(const std_msgs::UInt8 &msg) {
     task_id = msg.data;
     if((task_id == 1 && last_task_id == 2) || task_id == 14){
         fire_task_flag = true;
+    }else{
+        fire_task_flag = false;
     }
     //fire_task_flag = true;
     if (!fire_task_flag) {
