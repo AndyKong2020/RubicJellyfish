@@ -35,7 +35,7 @@ cv::Point2i frame_size;
 bool is_send_fire_position_flag = false;
 uint8_t mission = 2;
 DeviceType device_type = DeviceType::NA;
-double total_mileage = 0.0;
+static int tof_error_count;
 
 TakeOffTask *take_off_task00 = nullptr;
 RouteTask *route_task01 = nullptr;
@@ -222,7 +222,7 @@ void setParams(){
     route_task01 -> addToRouteList(route_point04);
     route_task01 -> addToRouteList(route_point05);
 
-    land_point00.position = Eigen::Vector3d(0.5, 0.5, -0.2);
+    land_point00.position = Eigen::Vector3d(-0.5, 0.5, -0.2);
     land_point00.angular_orientation = Eigen::Vector3d(0, 0, 0);
     land_task04 -> setLandPoint(land_point00);
 
@@ -243,19 +243,19 @@ void setParams(){
     take_off_task10 -> setTakeOffPoint(take_off_point10);
     take_off_task10 -> setTakeOffHeight(take_off_height10);
 
-    route_point10.position = Eigen::Vector3d(0.65, 1.3, 1.2);
+    route_point10.position = Eigen::Vector3d(-1.3, 0.65, 1.8);
     route_point10.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point11.position = Eigen::Vector3d(0.65, 2.9, 1.2);
+    route_point11.position = Eigen::Vector3d(-2.9, 0.65, 1.8);
     route_point11.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point12.position = Eigen::Vector3d(2.45, 2.9, 1.2);
+    route_point12.position = Eigen::Vector3d(-2.9, 2.45, 1.8);
     route_point12.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point13.position = Eigen::Vector3d(3.95, 2.9, 1.2);
+    route_point13.position = Eigen::Vector3d(-2.9, 3.95, 1.8);
     route_point13.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point14.position = Eigen::Vector3d(3.95, 1.25, 1.2);
+    route_point14.position = Eigen::Vector3d(-1.25, 3.95, 1.8);
     route_point14.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point15.position = Eigen::Vector3d(2.05, 1.3, 1.2);
+    route_point15.position = Eigen::Vector3d(-1.3, 2.05, 1.8);
     route_point15.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point15.position = Eigen::Vector3d(0.5, 0.5, 1.2);
+    route_point15.position = Eigen::Vector3d(-0.5, 0.5, 1.8);
     route_point15.angular_orientation = Eigen::Vector3d(0, 0, 0);
     route_task11 -> addToRouteList(route_point10);
     route_task11 -> addToRouteList(route_point11);
@@ -264,7 +264,7 @@ void setParams(){
     route_task11 -> addToRouteList(route_point14);
     route_task11 -> addToRouteList(route_point15);
 
-    land_point10.position = Eigen::Vector3d(0.5, 0.5, -0.2);
+    land_point10.position = Eigen::Vector3d(-0.5, 0.5, -0.2);
     land_point10.angular_orientation = Eigen::Vector3d(0, 0, 0);
     land_task16 -> setLandPoint(land_point10);
 
@@ -284,9 +284,12 @@ void imuCallback(const serial_common::gimbalConstPtr &msg) {   //change drone_co
 //    drone_control.roll = eulerAngle.x();
 //    drone_control.pitch = eulerAngle.y();
     static double last_h;
-    if (msg ->z - last_h > 0.1 || msg ->z - last_h < -0.1){
+
+    if ((msg ->z - last_h > 0.1 || msg ->z - last_h < -0.1) && tof_error_count < 10) {
+        tof_error_count ++;
         return;
     }
+    tof_error_count = 0;
     last_h = msg->z;
 
     drone.setHeight(msg->z);
