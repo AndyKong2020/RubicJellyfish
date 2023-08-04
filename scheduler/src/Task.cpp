@@ -31,7 +31,7 @@ inline bool position_match(const DronePose & a, const DronePose & b)
 {
     //计算两点距离
     double distance = sqrt(pow(a.position.x() - b.position.x(), 2) + pow(a.position.y() - b.position.y(), 2));
-    ROS_INFO("%d", distance);
+    ROS_INFO("distance:%f", distance);
     return distance < 0.3;
 }
 
@@ -96,7 +96,7 @@ void RouteTask::printLog() const {
 }
 
 DronePose RouteTask::runTask() {
-    while(route_index < route_list.size())
+    if(route_index < route_list.size())
     {
         if (position_match(drone.getPose(), route_list[route_index]))
         {
@@ -109,6 +109,7 @@ DronePose RouteTask::runTask() {
         }
     }
     ROS_WARN("RouteTask %d: Route finished", task_id);
+    return route_list[route_index];
 }
 
 RouteTask::RouteTask(const int &task_id) : Task(task_id) {
