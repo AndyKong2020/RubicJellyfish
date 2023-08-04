@@ -132,3 +132,13 @@ Eigen::Vector3d Drone::getAccumulativeError() const {
     return position_accumulative_error;
 }
 
+void Drone::setMileage() {
+    static ::DronePose last_pose;
+    mileage += sqrt(pow(getPose().position[0] - last_pose.position[0], 2) + pow(getPose().position[1] - last_pose.position[1], 2) + pow(getPose().position[2] - last_pose.position[2], 2));
+    last_pose = getPose();
+}
+
+double Drone::getMileage() const {
+    return mileage;
+}
+

@@ -35,6 +35,7 @@ cv::Point2i frame_size;
 bool is_send_fire_position_flag = false;
 uint8_t mission = 2;
 DeviceType device_type = DeviceType::NA;
+double total_mileage = 0.0;
 
 TakeOffTask *take_off_task00 = nullptr;
 RouteTask *route_task01 = nullptr;
@@ -161,7 +162,7 @@ void sendPosition(scheduler::pose_mode &_pose){
     _pose.target_vx = (float)message_to_car.x;
     _pose.target_vy = (float)message_to_car.y;
     _pose.target_vz = message_to_car.point_id;
-    _pose.target_wroll = 0;
+    _pose.target_wroll = (float)drone.getMileage();
     _pose.target_wpitch = 0;
     _pose.target_wyaw = 0;
     pose_mode_pub.publish(_pose);
@@ -183,6 +184,7 @@ void t265Callback(const nav_msgs::Odometry::ConstPtr & msg) {
     Eigen::Vector3d angular_velocity(msg->twist.twist.angular.x, msg->twist.twist.angular.y, msg->twist.twist.angular.z);
     drone.setVelocity(linear_velocity);
     drone.setAngularVelocity(angular_velocity);
+    drone.setMileage();
 }
 
 void setParams(){

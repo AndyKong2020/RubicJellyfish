@@ -37,6 +37,8 @@ public:
     void setAngularVelocity(const Eigen::Vector3d & _angular_velocity);
     void setAccumulativeError(const Eigen::Vector3d & _convinced_position);
     void setHeight(const double & _height);
+    void setMileage();
+    double getMileage() const;
     static Eigen::Vector3d ToEulerAngles(const Eigen::Quaterniond& q);
     Eigen::Vector3d getPosition() const;
     Eigen::Vector3d getVelocity() const;
@@ -54,6 +56,7 @@ private:
     Eigen::Quaterniond qtn_orientation;
     Eigen::Vector3d angular_orientation;
     Eigen::Vector3d angular_velocity;
+    double mileage;
     double height;
 };
 #endif //SRC_DRONE_H
