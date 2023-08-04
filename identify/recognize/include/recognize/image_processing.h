@@ -61,7 +61,8 @@ public :
     uint8_t h1 = 0 ,h2 = 0 ,h3 = 0;
     bool image_check(RotatedRect &target,const uint8_t &minsize,const uint8_t &maxsize,const uint8_t &task_id,const uint8_t &num,cv::Rect &res);
     float d_res = 0;
-
+    uint8_t minsize = 0;
+    uint8_t maxsize = 5000;
 };
 const int max_value_H = 360/2;
 const int max_value = 255;

@@ -123,6 +123,8 @@ void Task_cb(const std_msgs::UInt8 &msg) {
         _img.h1 = 0;
         _img.h2 = 0;
         _img.h3 = 0;
+        _img.minsize = 0;
+        _img.maxsize = 0;
     }else if(task_id == 1 || task_id == 2){
         _img.l1 = 0;
         _img.l2 = 0;
@@ -130,6 +132,8 @@ void Task_cb(const std_msgs::UInt8 &msg) {
         _img.h1 = 0;
         _img.h2 = 0;
         _img.h3 = 0;
+        _img.minsize = 0;
+        _img.maxsize = 0;
     }
 }
 int main(int argc, char **argv) {
