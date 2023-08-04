@@ -117,11 +117,17 @@ void get_img(ros::NodeHandle nh) {
 
     auto sensors = dev.query_sensors();
     for (const auto &sensor : sensors) {
-        setToDefault(sensor);
-        sensor.set_option(RS2_OPTION_EXPOSURE, 25000);
+        std::cout << "Sensor name: " << sensor.get_info(RS2_CAMERA_INFO_NAME) << std::endl;
+        if(sensor.get_info(RS2_CAMERA_INFO_NAME) == "RGB Camera"){
+            sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
+            sensors[1].set_option(RS2_OPTION_EXPOSURE, 25000);
+
+        }
+
+        //setToDefault(sensor);
+        //sensor.set_option(RS2_OPTION_EXPOSURE, 25000);
         //sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
     }
-    //sensors[0].set_option(RS2_OPTION_EXPOSURE, 25000);
     //sensors[0].set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
 
     //change_sensor_option(sensors[0],24,15);
@@ -228,8 +234,8 @@ int main(int argc, char **argv) {
     //声明节点句柄
     ros::NodeHandle nh;
     cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/cloud", 10);
-    img_pub = nh.advertise<sensor_msgs::Image>("/raw_img", 10);
-    img_depth_pub = nh.advertise<sensor_msgs::Image>("/raw_img_depth", 10);
+    img_pub = nh.advertise<sensor_msgs::Image>("/d435/color/image_raw", 10);
+    img_depth_pub = nh.advertise<sensor_msgs::Image>("/d435/aligned_depth_to_color/image_raw", 10);
     ros::Duration(1).sleep();
     while (ros::ok())
         get_img(nh);
