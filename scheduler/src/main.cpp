@@ -30,10 +30,10 @@ std_msgs::UInt8 current_task_id;
 DronePose target_pose;
 DronePose fire_pose;
 ImageTarget img_target;
-MessageToCar message_to_car;
+MessageToCar message_to_car = {0, 0, 0};
 cv::Point2i frame_size;
 bool is_send_fire_position_flag = false;
-uint8_t mission = 1;
+uint8_t mission = 2;
 DeviceType device_type = DeviceType::NA;
 
 TakeOffTask *take_off_task00 = nullptr;
@@ -65,10 +65,61 @@ DronePose land_point10;
 double take_off_height10;
 Eigen::Vector3d point_true_value10;
 
-MessageToCar generateMessageToCar(const DronePose & _fire_pose){
-    if (fire_pose.position.x() < -2){
 
+MessageToCar generateMessageToCar(const DronePose & _fire_pose){
+    MessageToCar _message_to_car;
+    _message_to_car.x = -_fire_pose.position.x();
+    _message_to_car.y = _fire_pose.position.y();
+    if (fire_pose.position.x() > -2.3) {
+        if (fire_pose.position.y() < 1.9) {
+            if (fire_pose.position.x() > -1.55) {
+                _message_to_car.point_id = 1;
+            }else{
+                _message_to_car.point_id = 2;
+            }
+
+        }else if(fire_pose.position.y() < 3.4){
+            if (fire_pose.position.x() > -1.55) {
+                _message_to_car.point_id = 3;
+            }else{
+                _message_to_car.point_id = 4;
+            }
+        }else{
+            if(fire_pose.position.x() > -0.9){
+                _message_to_car.point_id = 7;
+            }else if(fire_pose.position.x() > -1.6){
+                if(fire_pose.position.y() < 4.1){
+                    _message_to_car.point_id = 5;
+                }else{
+                    _message_to_car.point_id = 6;
+                }
+            }else{
+                _message_to_car.point_id = 8;
+            }
+        }
+    }else{
+        if (fire_pose.position.y() < 2) {
+            if(fire_pose.position.x() > -3) {
+                _message_to_car.point_id = 9;
+            }else{
+                _message_to_car.point_id = 10;
+            }
+        }else if(fire_pose.position.y() < 3.4){
+            if(fire_pose.position.x() > -3){
+                _message_to_car.point_id = 11;
+                }else{
+                _message_to_car.point_id = 12;
+            }
+            _message_to_car.point_id = 11;
+        }else{
+            if(fire_pose.position.x() > -3){
+                _message_to_car.point_id = 13;
+            }else{
+                _message_to_car.point_id = 14;
+            }
+        }
     }
+    return _message_to_car;
 }
 
 void sendTaskId(const int & task_id)
@@ -107,9 +158,9 @@ void sendPosition(scheduler::pose_mode &_pose){
     _pose.self_wpitch = drone.getAngularVelocity().y();
     _pose.self_wyaw = drone.getAngularVelocity().z();
 
-    _pose.target_vx = 0;
-    _pose.target_vy = 0;
-    _pose.target_vz = 0;
+    _pose.target_vx = (float)message_to_car.x;
+    _pose.target_vy = (float)message_to_car.y;
+    _pose.target_vz = (float)message_to_car.point_id;
     _pose.target_wroll = 0;
     _pose.target_wpitch = 0;
     _pose.target_wyaw = 0;
@@ -346,7 +397,7 @@ int main(int argc, char **argv) {
                 if (img_target.is_detect && !is_send_fire_position_flag){
                     ROS_WARN("FIRE DETECTED！！！！！！！！！！");
                     runTask(0, point_task02, img_target);
-                    //TODO：发送火焰位置
+                    message_to_car = generateMessageToCar(point_task02 ->getStayPoint());
                     ROS_WARN("FIRE POSITION SENDED！！！！！！！！！！");
                     is_send_fire_position_flag = true;
                 }
@@ -367,7 +418,7 @@ int main(int argc, char **argv) {
             runTask(2, point_task03, img_target);
             runTask(0, land_task04);
             //runTask(0, land_task03);
-        }else if (mission == 2){
+        }else if (mission == 0){
             ROS_WARN("RUNNING MISSION 2");
 
             runTask(2, take_off_task10);
@@ -378,11 +429,12 @@ int main(int argc, char **argv) {
                     ROS_WARN("FIRE DETECTED！！！！！！！！！！");
                     device_type = DeviceType::LED;
                     runTask(0, point_task12, img_target);
+                    message_to_car = generateMessageToCar(point_task12 ->getStayPoint());
                     ROS_WARN("FIRE AIMED！！！！！！！！！！");
+                    ROS_WARN("FIRE POSITION SENDED！！！！！！！！！！");
                     fire_pose = point_task12 -> getStayPoint();
                     DronePose lower_fire_pose = fire_pose;
                     lower_fire_pose.position.z() -= 0.8;
-                    //TODO：发送火焰位置
                     is_send_fire_position_flag = true;
                     route_task13 -> addToRouteList(fire_pose);
                     route_task13 -> addToRouteList(lower_fire_pose);

@@ -110,7 +110,7 @@ int main (int argc, char** argv)
         uint8_t _sumcheck = gimbalAng.sumcheck,_addcheck = gimbalAng.addcheck;
         cal_sum(&gimbalAng);
         if(gimbalAng.sumcheck == _sumcheck && gimbalAng.addcheck == _addcheck){
-            mode_switch.data = gimbalAng.id;
+            mode_switch.data = gimbalAng.vx;
             _imu.x = gimbalAng.x;
             _imu.y = gimbalAng.y;
             _imu.z = gimbalAng.z;
