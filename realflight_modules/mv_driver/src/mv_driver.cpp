@@ -2,6 +2,7 @@
 #include"rc_msgs/calibrateResult.h"
 #include<sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
+#include<cv_bridge/cv_bridge.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <librealsense2/rs.hpp>
 #include <iostream>
@@ -117,10 +118,14 @@ void get_img(ros::NodeHandle nh) {
     auto sensors = dev.query_sensors();
     for (const auto &sensor : sensors) {
         setToDefault(sensor);
+        sensor.set_option(RS2_OPTION_EXPOSURE, 25000);
+        //sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
     }
-    sensors[0].set_option(RS2_OPTION_EXPOSURE, 100);
-    change_sensor_option(sensors[0],24,15);
-    change_sensor_option(sensors[0],0,17);
+    //sensors[0].set_option(RS2_OPTION_EXPOSURE, 25000);
+    //sensors[0].set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
+
+    //change_sensor_option(sensors[0],24,15);
+    //change_sensor_option(sensors[0],0,17);
     //change_sensor_option(sensors[0],1,34);
     //sensors[0].set_option(RS2_OPTION_MAX_DISTANCE, 0.5);
 
