@@ -38,6 +38,7 @@ const double camera_fx = 474.055;
 const double camera_fy = 474.055;
 
 std::uint8_t task_id, last_task_id = 0;
+bool fire_task_flag = false;
 
 //
 ros::Publisher img_pub;
@@ -161,13 +162,16 @@ void get_img(ros::NodeHandle nh) {
 //    task_id = 1;
 //    last_task_id = 0;
     while (ros::ok()) {
-        if ((last_task_id == 2 && task_id == 3)||(last_task_id == 3 && task_id == 4)||(last_task_id == 14 && task_id == 15)||(last_task_id == 15 && task_id == 16)){
+        if((task_id == 1 && last_task_id == 2) || task_id == 14){
+            fire_task_flag = true;
+        }
+        if (fire_task_flag){
             //sensors[1].set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
             sensors[1].set_option(RS2_OPTION_EXPOSURE, 500);
 
-        }else if ((last_task_id == 0 && task_id == 1)||(last_task_id == 1 && task_id == 2)||(last_task_id == 10 && task_id == 11)||(last_task_id == 11 && task_id == 12)){
+        }else {
             //sensors[1].set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
-            sensors[1].set_option(RS2_OPTION_EXPOSURE, 500);
+            sensors[1].set_option(RS2_OPTION_EXPOSURE, 15);
         }
 //        task_id ++;
 //        last_task_id ++;
