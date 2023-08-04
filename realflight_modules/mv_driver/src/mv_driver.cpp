@@ -17,6 +17,7 @@
 #include <librealsense2/hpp/rs_sensor.hpp>
 
 #include <opencv2/opencv.hpp>
+#include <std_msgs/UInt8.h>
 
 
 //pcl
@@ -35,6 +36,8 @@ const double camera_cx = 311.704;
 const double camera_cy = 245.82;
 const double camera_fx = 474.055;
 const double camera_fy = 474.055;
+
+std::uint8_t task_id, last_task_id = 0;
 
 //
 ros::Publisher img_pub;
@@ -108,6 +111,11 @@ void setToDefault(const rs2::sensor &sensor) {
     }
 }
 
+void taskIdCallback(const std_msgs::UInt8 &msg) {
+    last_task_id = task_id;
+    task_id = msg.data;
+}
+
 void get_img(ros::NodeHandle nh) {
     rs2::context ctx;
     auto list = ctx.query_devices(); // Get a snapshot of currently connected devices
@@ -116,19 +124,23 @@ void get_img(ros::NodeHandle nh) {
     rs2::device dev = list.front();
 
     auto sensors = dev.query_sensors();
-    for (const auto &sensor : sensors) {
+    for (const auto &sensor: sensors) {
         std::cout << "Sensor name: " << sensor.get_info(RS2_CAMERA_INFO_NAME) << std::endl;
-        if(sensor.get_info(RS2_CAMERA_INFO_NAME) == "RGB Camera"){
-            sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
-            sensors[1].set_option(RS2_OPTION_EXPOSURE, 25000);
+//        if (sensor.get_info(RS2_CAMERA_INFO_NAME) == "RGB Camera") {
+//            //sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
+//            sensor.set_option(RS2_OPTION_EXPOSURE, 1000);
+//
+//        }
 
-        }
 
         //setToDefault(sensor);
         //sensor.set_option(RS2_OPTION_EXPOSURE, 25000);
         //sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
     }
-    //sensors[0].set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
+    sensors[1].set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 1);
+    sensors[1].set_option(RS2_OPTION_EXPOSURE, 300);
+    sensors[1].set_option(RS2_OPTION_GAIN, 5);
+
 
     //change_sensor_option(sensors[0],24,15);
     //change_sensor_option(sensors[0],0,17);
@@ -146,8 +158,23 @@ void get_img(ros::NodeHandle nh) {
     rs2_stream align_to = RS2_STREAM_COLOR;
     rs2::align align(align_to);
 
-
+//    task_id = 1;
+//    last_task_id = 0;
     while (ros::ok()) {
+        if ((last_task_id == 2 && task_id == 3)||(last_task_id == 3 && task_id == 4)||(last_task_id == 14 && task_id == 15)||(last_task_id == 15 && task_id == 16)){
+            //sensors[1].set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
+            sensors[1].set_option(RS2_OPTION_EXPOSURE, 500);
+
+        }else if ((last_task_id == 0 && task_id == 1)||(last_task_id == 1 && task_id == 2)||(last_task_id == 10 && task_id == 11)||(last_task_id == 11 && task_id == 12)){
+            //sensors[1].set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
+            sensors[1].set_option(RS2_OPTION_EXPOSURE, 500);
+        }
+//        task_id ++;
+//        last_task_id ++;
+
+
+
+
         rs2::frameset frames;
         frames = pipe.wait_for_frames();
         rs2::pointcloud pc;
@@ -236,6 +263,7 @@ int main(int argc, char **argv) {
     cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/cloud", 10);
     img_pub = nh.advertise<sensor_msgs::Image>("/d435/color/image_raw", 10);
     img_depth_pub = nh.advertise<sensor_msgs::Image>("/d435/aligned_depth_to_color/image_raw", 10);
+    ros::Subscriber task_id_sub = nh.subscribe("/task_id",10,taskIdCallback);
     ros::Duration(1).sleep();
     while (ros::ok())
         get_img(nh);

@@ -303,7 +303,6 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
     scheduler::velocity_mode velocity;
     drone.init();
-    message_to_car = Eigen::Vector3d::Zero();
     target_pose.position = Eigen::Vector3d::Zero();
     target_pose.angular_orientation = Eigen::Vector3d::Zero();
 
