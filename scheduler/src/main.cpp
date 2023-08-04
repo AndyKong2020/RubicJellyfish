@@ -21,6 +21,7 @@ ros::Publisher pose_mode_pub;
 ros::Publisher velocity_mode_pub;
 ros::Publisher task_id_pub;
 ros::Publisher target_pub;
+ros::Publisher device_pub;
 
 scheduler::pose_mode pose;
 
@@ -246,9 +247,11 @@ int main(int argc, char **argv) {
 
     pose_mode_pub = nh.advertise<scheduler::pose_mode>("/t265/pos", 1);
     task_id_pub = nh.advertise<std_msgs::UInt8>("/task_id", 1);
+    device_pub = nh.advertise<std_msgs::UInt8>("/use_device", 1);
     target_pub = nh.advertise<geometry_msgs::PoseStamped>("/target", 10);
     ros::Subscriber imu = nh.subscribe("/imu_show",10,imuCallback);
     ros::Subscriber img = nh.subscribe("/image/write",10,imgCallback);
+
     //velocity_mode_pub = nh.advertise<scheduler::velocity_mode>("/t265/velocity", 1);
 
     setParams();

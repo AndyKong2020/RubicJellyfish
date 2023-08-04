@@ -28,6 +28,7 @@ ros::Publisher plot_z;
 ros::Publisher imu_show;
 ros::Publisher switch_mode;
 bool ifShow;
+onboard_devices device = servo;
 
 std_msgs::Int8 mode;
 gimbal_info gimbalAng;
@@ -38,6 +39,7 @@ std_msgs::UInt8 mode_switch;
 void t265poswrite_callback(const scheduler::pose_mode::ConstPtr& msg)
 {
     t265_pos pos;
+    pos.mode = device;
     pos.self_x = msg->self_x;
     pos.self_y = msg->self_y;
     pos.self_z = msg->self_z;
@@ -74,16 +76,9 @@ void t265poswrite_callback(const scheduler::pose_mode::ConstPtr& msg)
     ser.serSend<t265_pos>(pos,pos.length);
 }
 
-void imagewrite_callback(const recognize::image::ConstPtr& msg)
+void device_callback(const std_msgs::UInt8& msg)
 {
-  image_target shootTgt;
-  vector<float> data;
-  shootTgt.mode = 2;
-  int length = 16;
-
-  shootTgt.length = length;
-  cal_sum(&shootTgt);
-  ser.serSend<image_target>(shootTgt,length);
+    device = (onboard_devices)msg.data;
 }
 
 int main (int argc, char** argv)
@@ -100,8 +95,8 @@ int main (int argc, char** argv)
     imu_show = nh.advertise<serial_common::gimbal>("/imu_show", 1);
     switch_mode = nh.advertise<std_msgs::UInt8>("/switch_mode", 1);
     ros::Subscriber t265pos_sub = nh.subscribe("/t265/pos",1,t265poswrite_callback);
-    ros::Subscriber image_sub = nh.subscribe("/image/write", 1, imagewrite_callback);
-
+    //ros::Subscriber image_sub = nh.subscribe("/image/write", 1, imagewrite_callback);
+    ros::Subscriber device_sub = nh.subscribe("/use_device", 1, device_callback);
 
     //设置串口属性，并打开串口
 
