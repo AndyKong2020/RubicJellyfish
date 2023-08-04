@@ -138,8 +138,7 @@ void get_img(ros::NodeHandle nh) {
         //sensor.set_option(RS2_OPTION_EXPOSURE, 25000);
         //sensor.set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
     }
-    sensors[1].set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 1);
-    sensors[1].set_option(RS2_OPTION_EXPOSURE, 300);
+    sensors[1].set_option(RS2_OPTION_EXPOSURE, 15);
     sensors[1].set_option(RS2_OPTION_GAIN, 5);
 
 
@@ -175,6 +174,7 @@ void get_img(ros::NodeHandle nh) {
         }
 //        task_id ++;
 //        last_task_id ++;
+        last_task_id = task_id;
 
 
 

@@ -84,7 +84,7 @@ vector<RotatedRect> find_centre(const Mat& srcImg,const Mat& midImg){
 //    namedWindow("【轮廓图】", WINDOW_NORMAL);
 //    imshow("【轮廓图】", midImg1);
 
-    const int area_min = 500;
+    const int area_min = 0;
     for (int i = 0; i < contours.size(); i++)
     {
         //每个轮廓
@@ -93,6 +93,7 @@ vector<RotatedRect> find_centre(const Mat& srcImg,const Mat& midImg){
         RotatedRect box = minAreaRect(Mat(points));
 
         if(box.size.width*box.size.height<area_min)   // if <area_min -> no target
+            //std::cout<<"!!!!!!!!!!!!!!!!!!size::"<<box.boundingRect().area()<<endl;
             continue;
 
         Point2f vertex[4];
@@ -103,13 +104,11 @@ vector<RotatedRect> find_centre(const Mat& srcImg,const Mat& midImg){
 //        //打印中心点位置及外接矩形角度
 //        cout << "中心点位置（第" << i << "条轮廓）：" << box.center << endl;
 //        cout << "外接矩形角度（第" << i << "条轮廓）：" << box.angle << endl;
-        if(box.boundingRect().area()>6000) {
             //绘制出最小面积的包围矩形
             line(dstImg, vertex[0], vertex[1], Scalar(200, 255, 200), 3, LINE_AA);
             line(dstImg, vertex[1], vertex[2], Scalar(200, 255, 200), 3, LINE_AA);
             line(dstImg, vertex[2], vertex[3], Scalar(200, 255, 200), 3, LINE_AA);
             line(dstImg, vertex[3], vertex[0], Scalar(200, 255, 200), 3, LINE_AA);
-        }
         //cout<<"area::::::"<<box.boundingRect().size()<<endl;
         //绘制中心的光标，为了容易理解，此处为手动计算中心点，也可以直接使用 box.center
         Point2f center, l, r, u, d;
@@ -153,22 +152,24 @@ RotatedRect image_processing::image_threshold(const Mat& srcImg){
 
     //实际的项目之中可以通过中值滤波,消除椒盐噪声,在用一次腐蚀去除掉相应的干扰,最后,加上膨胀将轮廓进行一个放大的过程.
 
-    int element_size =5;
+    int element_size = element;
     int s = element_size * 2 + 1;
     Mat structureElement = getStructuringElement(MORPH_RECT,
                                                  Size(s, s), Point(-1, -1));
 
-    // 膨胀，element_size为膨胀属性，越大膨胀越厉害
-    dilate(midImg, midImg, structureElement, Point(-1, -1), 1);
-    namedWindow("【膨胀】", WINDOW_NORMAL);
-    imshow("【膨胀】", midImg);
-
+    if(kind == 0) {
+        // 膨胀，element_size为膨胀属性，越大膨胀越厉害
+        dilate(midImg, midImg, structureElement, Point(-1, -1), 1);
+        namedWindow("【膨胀】", WINDOW_NORMAL);
+        imshow("【膨胀】", midImg);
+    }else if(kind == 1) {
 //    //开运算.先腐蚀后膨胀:可以去掉小的对象
-//    morphologyEx(midImg, midImg,MORPH_OPEN, element_size,Point(-1, -1), 2);
-//    //morphologyEx(frame_threshold, midImg, MORPH_CLOSE, element_size);
-//    namedWindow("【开运算后】", WINDOW_NORMAL);
-//    imshow("【开运算后】", midImg);
-//
+        morphologyEx(midImg, midImg, MORPH_OPEN, element_size, Point(-1, -1), 2);
+        //morphologyEx(frame_threshold, midImg, MORPH_CLOSE, element_size);
+        namedWindow("【开运算后】", WINDOW_NORMAL);
+        imshow("【开运算后】", midImg);
+    }
+    //
 //    //闭运算,先膨胀后腐蚀,可以填充小的洞
 //    morphologyEx(midImg, midImg, MORPH_CLOSE, element_size,Point(-1, -1), 2);
 //    namedWindow("【闭运算后】", WINDOW_NORMAL);
@@ -195,16 +196,21 @@ RotatedRect image_processing::image_threshold(const Mat& srcImg){
 bool image_processing::image_check(RotatedRect &target,const uint8_t &minsize,const uint8_t &maxsize,
                                    const uint8_t &task_id,const uint8_t &num,cv::Rect &res){
     bool flag = false;
+    std::cout<<"size::"<<target.boundingRect().size()<<endl;
     if(task_id == 0) {
         res.x = 0;
         res.y = 0;
-    }else if(task_id == 1 || task_id == 2){
+    }else if(task_id == 1 || task_id == 11){
+
         if(target.center.x > num && target.center.x < 640-num && target.center.y > num && target.center.y < 480-num
             && target.boundingRect().area() <= maxsize && target.boundingRect().area() >= minsize){
             flag = true;
             res.x = target.center.x;
             res.y = target.center.y;
         }
+    }else{
+        res.x = 0;
+        res.y = 0;
     }
 
     return flag;

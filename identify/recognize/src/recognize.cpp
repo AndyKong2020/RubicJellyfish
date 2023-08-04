@@ -31,7 +31,8 @@ image_processing depth_img;
 vector<decodedObject> decode_rec;
 image_processing _img;
 ov::CompiledModel final_model;
-uint8_t task_id;
+uint8_t task_id, last_task_id = 0;
+bool fire_task_flag = false;
 float d_value = 0;
 cv::Rect img_res;
 float d_res;
@@ -85,7 +86,7 @@ void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
     } else if((last_mode = 1)){
         num = 0;
     }
-    if(_img.image_check(final_box,0,2000,task_id,num,img_res)){
+    if(_img.image_check(final_box,_img.minsize,_img.maxsize,task_id,num,img_res)){
         d_res = d_value;
         _image.mode = 1;
     }else{
@@ -116,25 +117,35 @@ void Depth_cb(const sensor_msgs::ImageConstPtr &msg) {
 
 void Task_cb(const std_msgs::UInt8 &msg) {
     task_id = msg.data;
-    if(task_id == 0){
-        _img.l1 = 0;
-        _img.l2 = 0;
-        _img.l3 = 0;
-        _img.h1 = 0;
-        _img.h2 = 0;
-        _img.h3 = 0;
-        _img.minsize = 0;
-        _img.maxsize = 0;
-    }else if(task_id == 1 || task_id == 2){
-        _img.l1 = 0;
-        _img.l2 = 0;
-        _img.l3 = 0;
-        _img.h1 = 0;
-        _img.h2 = 0;
-        _img.h3 = 0;
-        _img.minsize = 0;
-        _img.maxsize = 0;
+    if((task_id == 1 && last_task_id == 2) || task_id == 14){
+        fire_task_flag = true;
     }
+    //fire_task_flag = true;
+    if (!fire_task_flag) {
+        _img.l1 = 0;
+        _img.l2 = 128;
+        _img.l3 = 128;
+        _img.h1 = 75;
+        _img.h2 = 255;
+        _img.h3 = 255;
+        _img.minsize = 10;
+        _img.maxsize = 1800;
+        _img.element = 7;
+        _img.kind = 0;
+    }else{
+        _img.l1 = 14;
+        _img.l2 = 0;
+        _img.l3 = 0;
+        _img.h1 = 255;
+        _img.h2 = 255;
+        _img.h3 = 90;
+        _img.minsize = 500;
+        _img.maxsize = 10000;
+        _img.element = 10;
+        _img.kind = 1;
+    }
+    last_task_id = task_id;
+
 }
 int main(int argc, char **argv) {
     ros::init(argc, argv, "recognize");
