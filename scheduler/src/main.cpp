@@ -30,6 +30,7 @@ std_msgs::UInt8 current_task_id;
 DronePose target_pose;
 DronePose fire_pose;
 ImageTarget img_target;
+MessageToCar message_to_car;
 cv::Point2i frame_size;
 bool is_send_fire_position_flag = false;
 uint8_t mission = 1;
@@ -64,6 +65,12 @@ DronePose land_point10;
 double take_off_height10;
 Eigen::Vector3d point_true_value10;
 
+MessageToCar generateMessageToCar(const DronePose & _fire_pose){
+    if (fire_pose.position.x() < -2){
+
+    }
+}
+
 void sendTaskId(const int & task_id)
 {
     current_task_id.data = task_id;
@@ -81,7 +88,7 @@ void sendPosition(scheduler::pose_mode &_pose){
 
     _pose.self_x = drone.getPosition().x();
     _pose.self_y = drone.getPosition().y();
-    _pose.self_z = drone.getPosition().z();
+    _pose.self_z = drone.getHeight();
     _pose.self_roll = drone.getAngularOrientation().x();
     _pose.self_pitch = drone.getAngularOrientation().y();
     _pose.self_yaw = drone.getAngularOrientation().z();
@@ -221,6 +228,12 @@ void imuCallback(const serial_common::gimbalConstPtr &msg) {   //change drone_co
 //    Eigen::Vector3d eulerAngle=quaternion.matrix().eulerAngles(0,1,2);
 //    drone_control.roll = eulerAngle.x();
 //    drone_control.pitch = eulerAngle.y();
+    static double last_h;
+    if (msg ->z - last_h > 0.1 || msg ->z - last_h < -0.1){
+        return;
+    }
+    last_h = msg->z;
+
     drone.setHeight(msg->z);
 }
 void imgCallback(const recognize::imageConstPtr &msg) {   //change drone_control imu to camera imu
@@ -290,6 +303,7 @@ int main(int argc, char **argv) {
     ros::NodeHandle nh;
     scheduler::velocity_mode velocity;
     drone.init();
+    message_to_car = Eigen::Vector3d::Zero();
     target_pose.position = Eigen::Vector3d::Zero();
     target_pose.angular_orientation = Eigen::Vector3d::Zero();
 
@@ -366,7 +380,7 @@ int main(int argc, char **argv) {
                     ROS_WARN("FIRE AIMED！！！！！！！！！！");
                     fire_pose = point_task12 -> getStayPoint();
                     DronePose lower_fire_pose = fire_pose;
-                    lower_fire_pose.position.z() -= 1;
+                    lower_fire_pose.position.z() -= 0.8;
                     //TODO：发送火焰位置
                     is_send_fire_position_flag = true;
                     route_task13 -> addToRouteList(fire_pose);

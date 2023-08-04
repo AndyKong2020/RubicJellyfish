@@ -11,6 +11,12 @@
 #include "angles/angles.h"
 #include "Drone.h"
 
+typedef struct {
+    double x;
+    double y;
+    uint8_t point_id;
+}MessageToCar;
+
 enum class DeviceType{
     NA,
     SERVO,
