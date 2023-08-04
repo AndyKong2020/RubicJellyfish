@@ -25,7 +25,7 @@ typedef struct
     uint8_t d_addr = 0xFF;
     uint8_t id = 0x00;
     uint8_t length = 103;
-    uint8_t mode = 1;       //(T265_pos -> mode=1  T265_velocity -> mode=2  image -> mode=3 )
+    uint8_t mode = 0;
     float self_x = 0; //5+12+2
     float self_y = 0;
     float self_z = 0;
@@ -46,7 +46,7 @@ typedef struct
     float self_wyaw = 0;
     float target_vx = 0;
     float target_vy = 0;
-    float target_vz = 0;
+    int target_vz = 0;                 //qu yu dai hao
     float target_wroll = 0;
     float target_wpitch = 0;
     float target_wyaw = 0;

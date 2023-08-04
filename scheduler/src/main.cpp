@@ -160,7 +160,7 @@ void sendPosition(scheduler::pose_mode &_pose){
 
     _pose.target_vx = (float)message_to_car.x;
     _pose.target_vy = (float)message_to_car.y;
-    _pose.target_vz = (float)message_to_car.point_id;
+    _pose.target_vz = message_to_car.point_id;
     _pose.target_wroll = 0;
     _pose.target_wpitch = 0;
     _pose.target_wyaw = 0;
