@@ -389,20 +389,20 @@ int main(int argc, char **argv) {
     while (ros::ok()) {
         device_type = DeviceType::NA;
         sendTaskId(0);
-        mission = 1;
+        //mission = 1;
         if (mission == 1){
             ROS_WARN("RUNNING MISSION 1");
             runTask(2, take_off_task00);
 
             while (!route_task01->isTaskFinished()){
-//                if (img_target.is_detect && !is_send_fire_position_flag){
-//                    ROS_WARN("FIRE DETECTED！！！！！！！！！！");
-//                    runTask(0, point_task02, img_target);
-//                    message_to_car = generateMessageToCar(point_task02 ->getStayPoint());
-//                    ROS_WARN("FIRE POSITION SENDED！！！！！！！！！！");
-//                    is_send_fire_position_flag = true;
-//                }
-//                ROS_WARN("BACK TO ROUTE！！！！！！！！！！");
+                if (img_target.is_detect && !is_send_fire_position_flag){
+                    ROS_WARN("FIRE DETECTED！！！！！！！！！！");
+                    runTask(0, point_task02, img_target);
+                    message_to_car = generateMessageToCar(point_task02 ->getStayPoint());
+                    ROS_WARN("FIRE POSITION SENDED！！！！！！！！！！");
+                    is_send_fire_position_flag = true;
+                }
+                ROS_WARN("BACK TO ROUTE！！！！！！！！！！");
                 sendTaskId(route_task01 -> getTaskId());
                 target_pose = route_task01 -> runTask();
                 sendPosition(pose);
@@ -415,10 +415,8 @@ int main(int argc, char **argv) {
             sendTaskId(3);
             sendTaskId(3);
             sendTaskId(3);
-            //        runTask(0, route_task01);
-            //runTask(2, point_task03, img_target);
+            runTask(2, point_task03, img_target);
             runTask(0, land_task04);
-            //runTask(0, land_task03);
         }else if (mission == 0){
             ROS_WARN("RUNNING MISSION 2");
 
