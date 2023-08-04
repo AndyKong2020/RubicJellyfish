@@ -36,16 +36,16 @@ uint8_t round_no_ = 0;
 
 TakeOffTask *take_off_task00 = nullptr;
 RouteTask *route_task01 = nullptr;
-LandTask *land_task04 = nullptr;
 PointTask *point_task02 = nullptr;
 PointTask *point_task03 = nullptr;
+LandTask *land_task04 = nullptr;
 
 TakeOffTask *take_off_task10 = nullptr;
 RouteTask *route_task11 = nullptr;
-LandTask *land_task14 = nullptr;
 PointTask *point_task12 = nullptr;
-PointTask *point_task13 = nullptr;
-
+RouteTask *route_task13 = nullptr;
+PointTask *point_task14 = nullptr;
+LandTask *land_task15 = nullptr;
 
 
 DronePose take_off_point00;
@@ -56,7 +56,7 @@ double take_off_height00;
 Eigen::Vector3d point_true_value00;
 
 DronePose take_off_point10;
-DronePose route_point10, route_point11, route_point12, route_point13, route_point14, route_point15, route_point16;
+DronePose route_point10, route_point11, route_point12, route_point13, route_point14, route_point15, route_point16, route_point17, route_point18, route_point19;
 DronePose stay_point10, stay_point11, stay_point12, stay_point13, stay_point14, stay_point15;
 DronePose land_point10;
 double take_off_height10;
