@@ -171,7 +171,7 @@ DronePose PointTask::runTask() {
     tgt_error.x = (image_error.x - vertical_y) * 0.002 * drone.getHeight();
     tgt_error.y = (image_error.y + vertical_x) * 0.002 * drone.getHeight();
     tgt_pose.position.x() = drone.getPose().position.x() + tgt_error.x;
-    tgt_pose.position.y() = drone.getPose().position.x() + tgt_error.y;
+    tgt_pose.position.y() = drone.getPose().position.y() + tgt_error.y;
     tgt_pose.position.z() = 1.5;
     return tgt_pose;
 }
