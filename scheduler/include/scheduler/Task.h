@@ -19,8 +19,8 @@ typedef struct {
 
 enum class DeviceType{
     NA,
-    SERVO,
-    LED
+    LED,
+    SERVO
 };
 
 typedef struct
