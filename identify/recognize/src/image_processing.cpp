@@ -193,14 +193,14 @@ RotatedRect image_processing::image_threshold(const Mat& srcImg){
     return final_box;
 }
 
-bool image_processing::image_check(RotatedRect &target,const uint8_t &minsize,const uint8_t &maxsize,
+bool image_processing::image_check(RotatedRect &target,const int &minsize,const int &maxsize,
                                    const uint8_t &task_id,const uint8_t &num,cv::Rect &res){
     bool flag = false;
     std::cout<<"size::"<<target.boundingRect().size()<<endl;
     if(task_id == 0) {
         res.x = 0;
         res.y = 0;
-    }else if(task_id == 1 || task_id == 11){
+    }else if(task_id == 1 || task_id == 2 || task_id == 3 || task_id == 11 || task_id == 12 || task_id == 15){
 
         if(target.center.x > num && target.center.x < 640-num && target.center.y > num && target.center.y < 480-num
             && target.boundingRect().area() <= maxsize && target.boundingRect().area() >= minsize){

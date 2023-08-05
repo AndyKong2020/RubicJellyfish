@@ -13,7 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   cv_bridge
   sensor_msgs
-  rc_msgs
 )
 find_package(realsense2 REQUIRED)
 find_package(OpenCV 4 REQUIRED)
@@ -153,7 +152,7 @@ include_directories(
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(${PROJECT_NAME}_node rc_msgs_generate_messages)
+# add_dependencies(${PROJECT_NAME}_node rc_msgs_generate_messages)
 
 ## Specify libraries to link a library or executable target against
 # target_link_libraries(${PROJECT_NAME}_node

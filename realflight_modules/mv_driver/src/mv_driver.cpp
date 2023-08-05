@@ -1,5 +1,4 @@
 #include "ros/ros.h"
-#include"rc_msgs/calibrateResult.h"
 #include<sensor_msgs/Image.h>
 #include <sensor_msgs/PointCloud2.h>
 #include<cv_bridge/cv_bridge.h>
@@ -172,9 +171,7 @@ void get_img(ros::NodeHandle nh) {
             //sensors[1].set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
             sensors[1].set_option(RS2_OPTION_EXPOSURE, 15);
         }
-//        task_id ++;
-//        last_task_id ++;
-        last_task_id = task_id;
+
 
 
 
@@ -255,8 +252,8 @@ void get_img(ros::NodeHandle nh) {
         img_pub.publish(img_msg);
 
         cloud_pub.publish(cloudmsg);
+        ros::spinOnce();
     }
-    change_sensor_option(sensors[0], 0, 15);
 }
 
 int main(int argc, char **argv) {
@@ -264,12 +261,14 @@ int main(int argc, char **argv) {
     ros::init(argc, argv, "mv_driver_node");
     //声明节点句柄
     ros::NodeHandle nh;
+    ros::Subscriber task_id_sub = nh.subscribe("/task_id",10,&taskIdCallback);
     cloud_pub = nh.advertise<sensor_msgs::PointCloud2>("/cloud", 10);
     img_pub = nh.advertise<sensor_msgs::Image>("/d435/color/image_raw", 10);
     img_depth_pub = nh.advertise<sensor_msgs::Image>("/d435/aligned_depth_to_color/image_raw", 10);
-    ros::Subscriber task_id_sub = nh.subscribe("/task_id",10,taskIdCallback);
     ros::Duration(1).sleep();
-    while (ros::ok())
+    while (ros::ok()){
         get_img(nh);
+        ros::spinOnce();
+    }
     nh.shutdown();
 }

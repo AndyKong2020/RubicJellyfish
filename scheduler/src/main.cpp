@@ -397,8 +397,8 @@ int main(int argc, char **argv) {
                     message_to_car = generateMessageToCar(point_task02 ->getStayPoint());
                     ROS_WARN("FIRE POSITION SENDED！！！！！！！！！！");
                     is_send_fire_position_flag = true;
+                    ROS_WARN("BACK TO ROUTE！！！！！！！！！！");
                 }
-                ROS_WARN("BACK TO ROUTE！！！！！！！！！！");
                 sendTaskId(route_task01 -> getTaskId());
                 target_pose = route_task01 -> runTask();
                 sendPosition(pose);
@@ -412,6 +412,9 @@ int main(int argc, char **argv) {
             sendTaskId(3);
             sendTaskId(3);
             runTask(2, point_task03, img_target);
+            land_point00.position.x() = point_task15 -> getStayPoint().position.x();
+            land_point00.position.y() = point_task15 -> getStayPoint().position.y();
+            land_task04 -> setLandPoint(land_point10);
             runTask(0, land_task04);
         }else if (mission == 0){
             ROS_WARN("RUNNING MISSION 2");
@@ -440,8 +443,9 @@ int main(int argc, char **argv) {
                     route_task14 -> addToRouteList(fire_pose);
                     runTask(2, route_task14);
                     device_type = DeviceType::NA;
+                    ROS_WARN("BACK TO ROUTE！！！！！！！！！！");
+
                 }
-                ROS_WARN("BACK TO ROUTE！！！！！！！！！！");
 
                 sendTaskId(route_task11 -> getTaskId());
                 target_pose = route_task11 -> runTask();
@@ -456,6 +460,9 @@ int main(int argc, char **argv) {
             sendTaskId(15);
             sendTaskId(15);
             runTask(2, point_task15, img_target);
+            land_point10.position.x() = point_task15 -> getStayPoint().position.x();
+            land_point10.position.y() = point_task15 -> getStayPoint().position.y();
+            land_task16 -> setLandPoint(land_point10);
             runTask(0, land_task16);
         }
 
