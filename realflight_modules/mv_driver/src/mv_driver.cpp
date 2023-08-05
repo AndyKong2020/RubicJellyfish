@@ -163,11 +163,11 @@ void get_img(ros::NodeHandle nh) {
         if((task_id == 1 && last_task_id == 2) || task_id == 14){
             fire_task_flag = true;
         }
-        if ((task_id == 3 && last_task_id == 1) || (task_id == 14 && last_task_id == 13)){
+        if ((task_id == 1 && last_task_id == 0) || (task_id == 14 && last_task_id == 13)){
             //sensors[1].set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
             sensors[1].set_option(RS2_OPTION_EXPOSURE, 500);
 
-        }else if ((task_id == 1 && last_task_id == 0) || (task_id == 11 && last_task_id == 10)){
+        }else if (task_id == 11 && last_task_id == 10){
             //sensors[1].set_option(RS2_OPTION_ENABLE_AUTO_EXPOSURE, 0);
             sensors[1].set_option(RS2_OPTION_EXPOSURE, 15);
         }

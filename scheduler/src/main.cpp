@@ -403,24 +403,25 @@ int main(int argc, char **argv) {
             ROS_WARN("RUNNING MISSION 1");
             runTask(2, take_off_task00);
 
-            while (!route_task01->isTaskFinished()){
-                if (img_target.is_detect && !is_send_fire_position_flag){
-                    ROS_WARN("FIRE DETECTED！！！！！！！！！！");
-                    runTask(0, point_task02, img_target);
-                    message_to_car = generateMessageToCar(point_task02 ->getStayPoint());
-                    ROS_WARN("FIRE POSITION SENDED！！！！！！！！！！");
-                    is_send_fire_position_flag = true;
-                    ROS_WARN("BACK TO ROUTE！！！！！！！！！！");
-                }
-                sendTaskId(route_task01 -> getTaskId());
-                target_pose = route_task01 -> runTask();
-                sendPosition(pose);
-                route_task01 -> printLog();
-                ros::spinOnce();
-                control_rate.sleep();
-            }
-            ROS_WARN("Task%d Finished", route_task01 -> getTaskId());
-            stay(route_task01 -> getStayPoint(), 1);
+//            while (!route_task01->isTaskFinished()){
+//                if (img_target.is_detect && !is_send_fire_position_flag){
+//                    ROS_WARN("FIRE DETECTED！！！！！！！！！！");
+//                    runTask(0, point_task02, img_target);
+//                    message_to_car = generateMessageToCar(point_task02 ->getStayPoint());
+//                    ROS_WARN("FIRE POSITION SENDED！！！！！！！！！！");
+//                    is_send_fire_position_flag = true;
+//                    ROS_WARN("BACK TO ROUTE！！！！！！！！！！");
+//                }
+//                sendTaskId(route_task01 -> getTaskId());
+//                target_pose = route_task01 -> runTask();
+//                sendPosition(pose);
+//                route_task01 -> printLog();
+//                ros::spinOnce();
+//                control_rate.sleep();
+//            }
+//            ROS_WARN("Task%d Finished", route_task01 -> getTaskId());
+//            stay(route_task01 -> getStayPoint(), 1);
+            runTask(2, route_task01);
             sendTaskId(3);
             sendTaskId(3);
             sendTaskId(3);
