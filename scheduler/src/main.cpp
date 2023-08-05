@@ -336,7 +336,13 @@ void runTask(const double & stay_time, PointTask * task, const ImageTarget & _im
         }
         else{
             task -> setTargetPose(drone.getPose());
-            break;
+            stay(drone.getPose(), 3);
+            if(!img_target.is_detect){
+                target_pose = task -> runTask();
+                break;
+            }else{
+                continue;
+            }
         }
         geometry_msgs::PoseStamped point;
         point.header.frame_id = "t265_odom_frame";
@@ -418,10 +424,12 @@ int main(int argc, char **argv) {
             sendTaskId(3);
             sendTaskId(3);
             sendTaskId(3);
-            runTask(2, point_task03, img_target);
-            land_point00.position.x() = point_task15 -> getStayPoint().position.x();
-            land_point00.position.y() = point_task15 -> getStayPoint().position.y();
-            land_task04 -> setLandPoint(land_point10);
+            if(img_target.is_detect) {
+                runTask(2, point_task03, img_target);
+                land_point00.position.x() = point_task15 -> getStayPoint().position.x();
+                land_point00.position.y() = point_task15 -> getStayPoint().position.y();
+                land_task04 -> setLandPoint(land_point10);
+            }
             runTask(0, land_task04);
         }else if (mission == 0){
             ROS_WARN("RUNNING MISSION 2");
@@ -466,10 +474,12 @@ int main(int argc, char **argv) {
             sendTaskId(15);
             sendTaskId(15);
             sendTaskId(15);
-            runTask(2, point_task15, img_target);
-            land_point10.position.x() = point_task15 -> getStayPoint().position.x();
-            land_point10.position.y() = point_task15 -> getStayPoint().position.y();
-            land_task16 -> setLandPoint(land_point10);
+            if(img_target.is_detect) {
+                runTask(2, point_task15, img_target);
+                land_point10.position.x() = point_task15->getStayPoint().position.x();
+                land_point10.position.y() = point_task15->getStayPoint().position.y();
+                land_task16 -> setLandPoint(land_point10);
+            }
             runTask(0, land_task16);
         }
 
