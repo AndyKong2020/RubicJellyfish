@@ -267,6 +267,10 @@ void PointTask::ifSetAccumulativeError(const bool &_if_accumulative_error) {
     if_accumulative_error = _if_accumulative_error;
 }
 
+void PointTask::setTargetPose(const DronePose &_tgt_pose) {
+    tgt_pose = _tgt_pose;
+}
+
 
 TakeOffTask::TakeOffTask(const int &task_id) : Task(task_id) {
     take_off_point_on_land.position = Eigen::Vector3d::Zero();

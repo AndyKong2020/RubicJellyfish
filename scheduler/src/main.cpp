@@ -226,9 +226,9 @@ void setParams(){
 
     point_true_value00[0] = 0;
     point_true_value00[1] = 0;
-    point_task02 ->setFrameSize(frame_size);
-    point_task02 ->setTrueValue(point_true_value00);
-    point_task02 ->ifSetAccumulativeError(false);
+    point_task03 ->setFrameSize(frame_size);
+    point_task03 ->setTrueValue(point_true_value00);
+    point_task03 ->ifSetAccumulativeError(false);
 
 
 
@@ -290,6 +290,7 @@ void imgCallback(const recognize::imageConstPtr &msg) {   //change drone_control
     img_target.target_point.y = msg->y;
     img_target.depth = msg->depth;
     img_target.is_detect = msg->mode;
+
 }
 
 void missionCallback(const std_msgs::UInt8 &msg) {
@@ -330,7 +331,13 @@ void runTask(const double & stay_time, PointTask * task, const ImageTarget & _im
     //while (1){
         sendTaskId(task -> getTaskId());
         task -> getMessage(_image_target);
-        target_pose = task -> runTask();
+        if (img_target.is_detect){
+            target_pose = task -> runTask();
+        }
+        else{
+            task -> setTargetPose(drone.getPose());
+            break;
+        }
         geometry_msgs::PoseStamped point;
         point.header.frame_id = "t265_odom_frame";
         point.pose.position.x = target_pose.position.x();

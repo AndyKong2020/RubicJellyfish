@@ -75,6 +75,7 @@ public:
     void setIntrinsicMatrix(const double & _fx, const double & _fy, const double & _cx, const double & _cy);
     void getMessage(const ImageTarget& img_target);
     void setAccumulativeError();
+    void setTargetPose(const DronePose & _tgt_pose);
     void printLog() const override;
     void ifSetAccumulativeError(const bool & _if_accumulative_error);
     DronePose runTask() override;

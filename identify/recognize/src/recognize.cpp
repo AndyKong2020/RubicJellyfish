@@ -101,8 +101,10 @@ void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
     cout<< "Value of depth_pic's pixel= "<<_image.depth<<endl;
     last_mode = _image.mode;
 
-    if(_image.x !=0 && _image.y != 0 && _image.depth != 0)
-        image_pub.publish(_image);
+    if(_image.x !=0 && _image.y != 0 && _image.depth != 0){
+        _image.mode = 0;
+    }
+    image_pub.publish(_image);
     std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
 }
 
