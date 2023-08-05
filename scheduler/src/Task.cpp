@@ -163,7 +163,9 @@ PointTask::PointTask(const int & task_id) : Task(task_id) {
 
 DronePose PointTask::runTask() {
     image_error.x = (double)frame_size.y/2 - (double)img_target.target_point.y;
+    ROS_ERROR("image_error.x = %f", image_error.x);
     image_error.y = (double)frame_size.x/2 - (double)img_target.target_point.x;
+    ROS_ERROR("image_error.y = %f", image_error.y);
     double vertical_x = 130 * sqrt(frame_size.x * frame_size.x + frame_size.y * frame_size.y) * drone.getPose().angular_orientation.x() / 2 * tan(fov / 2);
     double vertical_y = 130 * sqrt(frame_size.x * frame_size.x + frame_size.y * frame_size.y) * drone.getPose().angular_orientation.y() / 2 * tan(fov / 2);
     tgt_error.x = (image_error.x - vertical_y) * 0.002 * drone.getHeight();
