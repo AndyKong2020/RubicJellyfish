@@ -32,7 +32,7 @@ inline bool position_match(const DronePose & a, const DronePose & b)
     //计算两点距离
     double distance = sqrt(pow(a.position.x() - b.position.x(), 2) + pow(a.position.y() - b.position.y(), 2));
     ROS_INFO("distance:%f", distance);
-    return distance < 0.3;
+    return distance < 0.15;
 }
 
 inline bool orientation_match(const DronePose & a, const DronePose & b)
