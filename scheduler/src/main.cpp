@@ -51,13 +51,6 @@ DronePose land_point00;
 double take_off_height00;
 Eigen::Vector3d point_true_value00;
 
-DronePose take_off_point10;
-DronePose route_point10, route_point11, route_point12, route_point13, route_point14, route_point15, route_point16, route_point17, route_point18, route_point19;
-DronePose stay_point10, stay_point11, stay_point12, stay_point13, stay_point14, stay_point15;
-DronePose land_point10;
-double take_off_height10;
-Eigen::Vector3d point_true_value10;
-
 
 void sendTaskId(const int & task_id)
 {
@@ -166,11 +159,6 @@ void setParams(){
     point_task02 ->setTrueValue(point_true_value00);
     point_task02 ->ifSetAccumulativeError(false);
 
-
-
-    take_off_point10.position = Eigen::Vector3d(0, 0, 0);
-    take_off_point10.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    take_off_height10 = 1.8;
 
 }
 void imuCallback(const serial_common::gimbalConstPtr &msg) {   //change drone_control imu to camera imu
