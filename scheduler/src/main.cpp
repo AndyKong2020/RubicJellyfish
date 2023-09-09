@@ -40,16 +40,8 @@ static int tof_error_count;
 TakeOffTask *take_off_task00 = nullptr;
 RouteTask *route_task01 = nullptr;
 PointTask *point_task02 = nullptr;
-PointTask *point_task03 = nullptr;
+RouteTask *route_task03 = nullptr;
 LandTask *land_task04 = nullptr;
-
-TakeOffTask *take_off_task10 = nullptr;
-RouteTask *route_task11 = nullptr;
-PointTask *point_task12 = nullptr;
-RouteTask *route_task13 = nullptr;
-RouteTask *route_task14 = nullptr;
-PointTask *point_task15 = nullptr;
-LandTask *land_task16 = nullptr;
 
 
 DronePose take_off_point00;
@@ -66,62 +58,6 @@ DronePose land_point10;
 double take_off_height10;
 Eigen::Vector3d point_true_value10;
 
-
-MessageToCar generateMessageToCar(const DronePose & _fire_pose){
-    MessageToCar _message_to_car;
-    _message_to_car.x = -_fire_pose.position.x() + 0.5;
-    _message_to_car.y = _fire_pose.position.y() + 0.5;
-    if (fire_pose.position.x() > -2.3) {
-        if (fire_pose.position.y() < 1.9) {
-            if (fire_pose.position.x() > -1.55) {
-                _message_to_car.point_id = 1;
-            }else{
-                _message_to_car.point_id = 2;
-            }
-
-        }else if(fire_pose.position.y() < 3.4){
-            if (fire_pose.position.x() > -1.55) {
-                _message_to_car.point_id = 3;
-            }else{
-                _message_to_car.point_id = 4;
-            }
-        }else{
-            if(fire_pose.position.x() > -0.9){
-                _message_to_car.point_id = 7;
-            }else if(fire_pose.position.x() > -1.6){
-                if(fire_pose.position.y() < 4.1){
-                    _message_to_car.point_id = 5;
-                }else{
-                    _message_to_car.point_id = 6;
-                }
-            }else{
-                _message_to_car.point_id = 8;
-            }
-        }
-    }else{
-        if (fire_pose.position.y() < 2) {
-            if(fire_pose.position.x() > -3) {
-                _message_to_car.point_id = 9;
-            }else{
-                _message_to_car.point_id = 10;
-            }
-        }else if(fire_pose.position.y() < 3.4){
-            if(fire_pose.position.x() > -3){
-                _message_to_car.point_id = 11;
-                }else{
-                _message_to_car.point_id = 12;
-            }
-            _message_to_car.point_id = 11;
-        }else{
-            if(fire_pose.position.x() > -3){
-                _message_to_car.point_id = 13;
-            }else{
-                _message_to_car.point_id = 14;
-            }
-        }
-    }
-    return _message_to_car;
-}
 
 void sendTaskId(const int & task_id)
 {
@@ -226,47 +162,15 @@ void setParams(){
 
     point_true_value00[0] = 0;
     point_true_value00[1] = 0;
-    point_task03 ->setFrameSize(frame_size);
-    point_task03 ->setTrueValue(point_true_value00);
-    point_task03 ->ifSetAccumulativeError(false);
+    point_task02 ->setFrameSize(frame_size);
+    point_task02 ->setTrueValue(point_true_value00);
+    point_task02 ->ifSetAccumulativeError(false);
 
 
 
     take_off_point10.position = Eigen::Vector3d(0, 0, 0);
     take_off_point10.angular_orientation = Eigen::Vector3d(0, 0, 0);
     take_off_height10 = 1.8;
-    take_off_task10 -> setTakeOffPoint(take_off_point10);
-    take_off_task10 -> setTakeOffHeight(take_off_height10);
-
-    route_point10.position = Eigen::Vector3d(-2.7, 0.3, 1.8);
-    route_point10.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point11.position = Eigen::Vector3d(-2.5, 3.4, 1.8);
-    route_point11.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point12.position = Eigen::Vector3d(-1.1, 3.4, 1.8);
-    route_point12.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point13.position = Eigen::Vector3d(-1.1, 1.1, 1.8);
-    route_point13.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_point14.position = Eigen::Vector3d(0, 0, 1.8);
-    route_point14.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    route_task11 -> addToRouteList(route_point10);
-    route_task11 -> addToRouteList(route_point11);
-    route_task11 -> addToRouteList(route_point12);
-    route_task11 -> addToRouteList(route_point13);
-    route_task11 -> addToRouteList(route_point14);
-    route_task11 -> addToRouteList(route_point15);
-
-    land_point10.position = Eigen::Vector3d(0, 0, -1.0);
-    land_point10.angular_orientation = Eigen::Vector3d(0, 0, 0);
-    land_task16 -> setLandPoint(land_point10);
-
-    point_task12 ->setFrameSize(frame_size);
-    point_task12 ->ifSetAccumulativeError(false);
-
-    point_true_value10[0] = 0;
-    point_true_value10[1] = 0;
-    point_task15 ->setFrameSize(frame_size);
-    point_task15 ->setTrueValue(point_true_value00);
-    point_task15 ->ifSetAccumulativeError(false);
 
 }
 void imuCallback(const serial_common::gimbalConstPtr &msg) {   //change drone_control imu to camera imu
@@ -371,16 +275,8 @@ int main(int argc, char **argv) {
     take_off_task00 = new TakeOffTask(0);
     route_task01 = new RouteTask(1);
     point_task02 = new PointTask(2);
-    point_task03 = new PointTask(3);
+    point_task02 = new PointTask(3);
     land_task04 = new LandTask(4);
-
-    take_off_task10 = new TakeOffTask(10);
-    route_task11 = new RouteTask(11);
-    point_task12 = new PointTask(12);
-    route_task13 = new RouteTask(13);
-    route_task14 = new RouteTask(14);
-    point_task15 = new PointTask(15);
-    land_task16 = new LandTask(16);
 
     pose_mode_pub = nh.advertise<scheduler::pose_mode>("/t265/pos", 1);
     task_id_pub = nh.advertise<std_msgs::UInt8>("/task_id", 1);
@@ -398,90 +294,14 @@ int main(int argc, char **argv) {
     while (ros::ok()) {
         device_type = DeviceType::NA;
         sendTaskId(0);
-        //mission = 1;
+        mission = 1;
         if (mission == 1){
             ROS_WARN("RUNNING MISSION 1");
             runTask(2, take_off_task00);
-
-//            while (!route_task01->isTaskFinished()){
-//                if (img_target.is_detect && !is_send_fire_position_flag){
-//                    ROS_WARN("FIRE DETECTED！！！！！！！！！！");
-//                    runTask(0, point_task02, img_target);
-//                    message_to_car = generateMessageToCar(point_task02 ->getStayPoint());
-//                    ROS_WARN("FIRE POSITION SENDED！！！！！！！！！！");
-//                    is_send_fire_position_flag = true;
-//                    ROS_WARN("BACK TO ROUTE！！！！！！！！！！");
-//                }
-//                sendTaskId(route_task01 -> getTaskId());
-//                target_pose = route_task01 -> runTask();
-//                sendPosition(pose);
-//                route_task01 -> printLog();
-//                ros::spinOnce();
-//                control_rate.sleep();
-//            }
-//            ROS_WARN("Task%d Finished", route_task01 -> getTaskId());
-//            stay(route_task01 -> getStayPoint(), 1);
             runTask(2, route_task01);
-            sendTaskId(3);
-            sendTaskId(3);
-            sendTaskId(3);
-            if(img_target.is_detect) {
-                runTask(2, point_task03, img_target);
-                land_point00.position.x() = point_task15 -> getStayPoint().position.x();
-                land_point00.position.y() = point_task15 -> getStayPoint().position.y();
-                land_task04 -> setLandPoint(land_point10);
-            }
+            runTask(0, point_task02, img_target);
+            runTask(2, route_task03);
             runTask(0, land_task04);
-        }else if (mission == 0){
-            ROS_WARN("RUNNING MISSION 2");
-
-            runTask(2, take_off_task10);
-
-            ROS_WARN("Task%d Start", route_task11 -> getTaskId());
-            while (!route_task11->isTaskFinished()){
-                if (img_target.is_detect && !is_send_fire_position_flag){
-                    ROS_WARN("FIRE DETECTED！！！！！！！！！！");
-                    device_type = DeviceType::LED;
-                    runTask(0, point_task12, img_target);
-                    message_to_car = generateMessageToCar(point_task12 ->getStayPoint());
-                    ROS_WARN("FIRE AIMED！！！！！！！！！！");
-                    ROS_WARN("FIRE POSITION SENDED！！！！！！！！！！");
-                    fire_pose = point_task12 -> getStayPoint();
-                    DronePose lower_fire_pose = fire_pose;
-                    lower_fire_pose.position.z() -= 0.8;
-                    is_send_fire_position_flag = true;
-                    route_task13 -> addToRouteList(fire_pose);
-                    route_task13 -> addToRouteList(lower_fire_pose);
-                    runTask(2, route_task13);
-                    ROS_WARN("DROP BAG！！！！！！！！！！");
-                    device_type = DeviceType::SERVO;
-                    stay(lower_fire_pose, 5);
-                    route_task14 -> addToRouteList(fire_pose);
-                    runTask(2, route_task14);
-                    device_type = DeviceType::NA;
-                    ROS_WARN("BACK TO ROUTE！！！！！！！！！！");
-
-                }
-
-                sendTaskId(route_task11 -> getTaskId());
-                target_pose = route_task11 -> runTask();
-                sendPosition(pose);
-                route_task11 -> printLog();
-                ros::spinOnce();
-                control_rate.sleep();
-            }
-            ROS_WARN("Task%d Finished", route_task11 -> getTaskId());
-            stay(route_task11 -> getStayPoint(), 1);
-            sendTaskId(15);
-            sendTaskId(15);
-            sendTaskId(15);
-            if(img_target.is_detect) {
-                runTask(2, point_task15, img_target);
-                land_point10.position.x() = point_task15->getStayPoint().position.x();
-                land_point10.position.y() = point_task15->getStayPoint().position.y();
-                land_task16 -> setLandPoint(land_point10);
-            }
-            runTask(0, land_task16);
         }
 
         ros::spinOnce();
