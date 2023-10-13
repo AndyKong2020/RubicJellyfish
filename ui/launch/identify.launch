@@ -1,0 +1,9 @@
+<launch>
+
+    <node pkg="scheduler" type="scheduler_node" name="scheduler" output="screen"  required="true" />
+    <node pkg="mv_driver" type="mv_driver_node" name="mv_driver_node" output="screen" respawn="true"/>
+    <node pkg="yolo_identify" type="yolo_identify_node" name="yolov7" output="screen" respawn="true" />
+    <node pkg="ui" type="ui_node" name="ui_node" output="screen"  required="true" />
+    <node pkg="plane_extract" type="plane_extract_node" name="plane_extract"  respawn="true" />    
+
+</launch>

@@ -26,7 +26,10 @@ using namespace zbar;
 
 
 Mat img_show;
+ros::Publisher yolo_pub;
 ros::Publisher image_pub;
+ros::Publisher step_pub;
+sensor_msgs::Image image_msg;
 image_processing depth_img;
 vector<decodedObject> decode_rec;
 image_processing _img;
@@ -56,29 +59,24 @@ void Image_cb(const sensor_msgs::ImageConstPtr &msg) {
         return;
     }
 
-    final_box = _img.image_threshold(img_show);
+    //final_box = _img.image_threshold(img_show);
     //_img.tool_tohsv(img_show);
+    int id = 0;
+    Mat img_yolo;
+    img_yolo = yolov5_identify(img_show,final_model,id);
 
+    sensor_msgs::ImagePtr color_msg = cv_bridge::CvImage(std_msgs::Header(),
+                                                         "bgr8", img_yolo).toImageMsg();
+    image_msg = *color_msg;
+    yolo_pub.publish(image_msg);
 
-/*                     //Yolov5
-    std::vector<Detection> yolov5_res = yolov5_identify(img_show,final_model);
-    if(yolov5_res.size()>1 && yolov5_res.size()!=0){
-        float max_con = 0;
-        int max_id = 0;
-        for(int i = 0; i > yolov5_res.size(); i++){
-            if(yolov5_res[i].confidence>max_con){
-                max_con = yolov5_res[i].confidence;
-                max_id = i;
-            }
-        }
-        final_box = yolov5_res[max_id].box;
-    }else if(yolov5_res.size()==1){
-        final_box = yolov5_res[0].box;
-    }
-*/
-    std::cout << "xxx: " << final_box.center.x << std::endl;
-    std::cout << "yyy: " << final_box.center.y << std::endl;
+    std::cout << "id: " << id << std::endl;
+    //std::cout << "yyy: " << final_box.center.y << std::endl;
     //std::cout << "Identify Latency: " << (ros::Time::now() - start).toSec() << "s" << std::endl;
+
+    std_msgs::UInt8 _step;
+    _step.data = id;
+    step_pub.publish(_step);
 
     uint8_t num = 0;
     if((last_mode = 0)){
@@ -152,13 +150,17 @@ void Task_cb(const std_msgs::UInt8 &msg) {
 int main(int argc, char **argv) {
     ros::init(argc, argv, "recognize");
     ros::NodeHandle n;
-    ros::Subscriber resultsSub = n.subscribe("/d435/color/image_raw", 20, &Image_cb);
+    yolo_pub = n.advertise<sensor_msgs::Image>("/yolo_detect", 10);
+    ros::Subscriber resultsSub = n.subscribe("/camera/rgb/image_raw", 20, &Image_cb);
     ros::Subscriber DepthSub = n.subscribe("/d435/aligned_depth_to_color/image_raw", 20, &Depth_cb);
     image_pub = n.advertise<recognize::image>("/image/write", 20);
+    step_pub = n.advertise<std_msgs::UInt8>("/step", 1);
     ros::Subscriber TaskSub = n.subscribe("/task_id", 20, &Task_cb);
-    //final_model = yolo_init("/home/robin/yolov5/runs/train/exp2/weights/best.xml");
-    ros::Rate loop_rate(10);
+    final_model = yolo_init("/home/robin/yolov5/class/best.xml");
+    img_show = imread("/home/robin/11.jpg");
+    ros::Rate loop_rate(100);
     while (ros::ok()) {
+        //std::vector<Detection> yolov5_res = yolov5_identify(img_show,final_model);
         ros::spinOnce();
         loop_rate.sleep();
     }

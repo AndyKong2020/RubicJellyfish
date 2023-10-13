@@ -8,6 +8,8 @@
 #include <opencv2/dnn.hpp>
 #include <openvino/openvino.hpp>
 #include <opencv2/opencv.hpp>
+#include <ros/ros.h>
+#include <sensor_msgs/Image.h>
 struct Detection
 {
     int class_id;
@@ -22,6 +24,9 @@ struct Resize
     int dw;
     int dh;
 };
+
+
 ov::CompiledModel yolo_init(const std::string& xml);
-std::vector<Detection> yolov5_identify(cv::Mat _image,ov::CompiledModel compiled_model);
+cv::Mat yolov5_identify(cv::Mat _image,ov::CompiledModel compiled_model,int &id_);
+
 #endif //SRC_YOLOV5_H

@@ -4,6 +4,7 @@
 #include <opencv2/dnn.hpp>
 #include <openvino/openvino.hpp>
 #include <opencv2/opencv.hpp>
+#include <cv_bridge/cv_bridge.h>
 #include "recognize/yolov5.h"
 
 using namespace std;
@@ -12,8 +13,11 @@ const float SCORE_THRESHOLD = 0.2;
 const float NMS_THRESHOLD = 0.4;
 const float CONFIDENCE_THRESHOLD = 0.4;
 
-
-
+struct yolo{
+   int area;
+   int id;
+   float confidence;
+};
 
 Resize resize_and_pad(cv::Mat& img, cv::Size new_shape) {
     float width = img.cols;
@@ -53,7 +57,7 @@ ov::CompiledModel yolo_init(const std::string& xml){
     ov::CompiledModel compiled_model = core.compile_model(model, "CPU");
     return compiled_model;
 }
-std::vector<Detection> yolov5_identify(cv::Mat _image,ov::CompiledModel compiled_model){
+cv::Mat yolov5_identify(cv::Mat _image,ov::CompiledModel compiled_model,int &id_){
 
     // Step 3. Read input image
     cv::Mat img = _image;
@@ -123,6 +127,7 @@ std::vector<Detection> yolov5_identify(cv::Mat _image,ov::CompiledModel compiled
     }
 
     std::vector<Detection> result;
+    //std::vector<yolo> yolov5;
     for (int i = 0; i < output.size(); i++) {
         if (output[i].confidence > 0.6) {
             auto detection = output[i];
@@ -145,15 +150,31 @@ std::vector<Detection> yolov5_identify(cv::Mat _image,ov::CompiledModel compiled
             float ymax = box.y + box.height;
             cv::rectangle(img, cv::Point(box.x, box.y), cv::Point(xmax, ymax), cv::Scalar(0, 255, 0), 3);
             cv::rectangle(img, cv::Point(box.x, box.y - 20), cv::Point(xmax, box.y), cv::Scalar(0, 255, 0), cv::FILLED);
-            cv::imshow("result", img);
-            cv::waitKey(1);
+            //cv::imshow("result", img);
+            //cv::waitKey(0);
             cv::putText(img, std::to_string(classId), cv::Point(box.x, box.y - 5), cv::FONT_HERSHEY_SIMPLEX, 0.5,
                         cv::Scalar(0, 0, 0));
             result.push_back(output[i]);
+
         }
     }
 
-    cv::imwrite("./detection_cpp.png", img);
 
-    return result;
+    //cv::imwrite("./detection_cpp.png", img);
+    int id = 0;
+    if (result.size()>1 && !result.empty()){
+        float max_area = 0;
+        int max_id = 0;
+        for(int i = 0; i > result.size(); i++){
+            if(result[i].box.area()>max_area){
+                max_area = result[i].box.area();
+                max_id = i;
+            }
+        }
+        id = result[max_id].class_id;
+    }else if(result.size() == 1){
+        id = result[0].class_id;
+    }
+    id_ = id;
+    return img;
 }
